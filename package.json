@@ -1,0 +1,30 @@
+{
+  "name": "experimental-es6-isomorphic-flux",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "db-migrate": "^0.7.1",
+    "dispatchr": "^0.2.3",
+    "express": "^4.9.0",
+    "express-state": "^1.2.0",
+    "fetchr": "^0.3.0",
+    "jade": "^1.6.0",
+    "pg": "^3.4.2",
+    "react": "^0.11.2"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.0.1",
+    "grunt-contrib-uglify": "^0.5.1",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-react": "^0.9.0",
+    "grunt-traceur": "^0.2.5",
+    "traceur": "0.0.61"
+  }
+}
