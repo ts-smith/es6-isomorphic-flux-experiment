@@ -5,20 +5,52 @@ module.exports = function(grunt) {
       pkg: grunt.file.readJSON('package.json'),
       uglify: {
          options: {
-            banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+            compress: {
+               drop_console: true
+            }
          },
-         build: {
-            src: 'src/<%= pkg.name %>.js',
-            dest: 'build/<%= pkg.name %>.min.js'
+         my_target: {
+            files: {
+               'bundle.min.js': ['bundle.js']
+            }
          }
       },
       watch: {
          scripts: {
-            files: ['components/**/*.js', 'src/**/*.js'],
-            tasks: ['compile'],
+            files: ['src/**/*.js'],
+            tasks: ['build'],
             options: {
                spawn: true,
             },
+         },
+         express: {
+            files: [ 'build/**/*.js'],
+            tasks: [ 'express:dev'],
+            options: { spawn: false }
+         }
+      },
+      jsbeautifier: {
+         files: ['src/**.*.js'],
+         options: {
+            js: {
+               braceStyle: "collapse",
+               breakChainedMethods: false,
+               e4x: false,
+               evalCode: false,
+               indentChar: " ",
+               indentLevel: 0,
+               indentSize: 3,
+               indentWithTabs: false,
+               jslintHappy: false,
+               keepArrayIndentation: false,
+               keepFunctionIndentation: false,
+               maxPreserveNewlines: 4,
+               preserveNewlines: true,
+               spaceBeforeConditional: true,
+               spaceInParen: false,
+               unescapeStrings: false,
+               wrapLineLength: 80
+            }
          }
       },
       react: {
@@ -26,9 +58,9 @@ module.exports = function(grunt) {
             files: [
                {
                   expand: true,
-                  cwd: 'components',
-                  src: ['**/*.js'],
-                  dest: 'src/public/components',
+                  cwd: 'src/public/components',
+                  src: ['**/*.jsx'],
+                  dest: 'src/public/.components-compiled',
                   ext: '.js',
                }
             ]
@@ -37,6 +69,10 @@ module.exports = function(grunt) {
 
       traceur: {
          options: {
+           includeRuntime: false,
+           modules: 'commonjs',
+           sourceMaps: true,
+
            arrowFunctions: true,
            classes: true,
            blockBinding: true,
@@ -49,11 +85,9 @@ module.exports = function(grunt) {
 
            forOf: true,
            templateLiterals: true,
-           sourceMaps: true,
 
            computedPropertyNames: true,
 
-           modules: 'register',
            referrer: '',
 
            asyncFunctions: false,
@@ -82,30 +116,59 @@ module.exports = function(grunt) {
             files: [{
                expand: true,
                cwd: 'src',
-               src: ['**/*.js'],
+               src: ['**/*.js', '!public/components/**', '!public/.components-compiled/**'],
                dest: 'build/'
+            },{
+               expand: true,
+               cwd: 'src/public/.components-compiled',
+               src: ['**/*.js'],
+               dest: 'build/public/components'
+
             }]
          },
       },
       browserify: {
          dist: {
             files: {
-               'public.js': ['build/public/**/*.js']
+               'assets/public.js': ['build/public/**/*.js']
             }
          }
-      }
+      },
+      express: {
+         options: {
+         // Override defaults here
+         },
+         dev: {
+            options: {
+               script: 'build/server.js'
+            }
+         },
+         prod: {
+           options: {
+              script: 'build/server.js',
+              node_env: 'production'
+           }
+         },
+         test: {
+            options: {
+               script: 'build/server.js'
+            }
+         }
+      } 
    });
 
    // Load the plugin that provides the "uglify" task.
    grunt.loadNpmTasks('grunt-contrib-uglify');
    grunt.loadNpmTasks('grunt-contrib-watch');
+   grunt.loadNpmTasks('grunt-jsbeautifier');
    grunt.loadNpmTasks('grunt-react');
    grunt.loadNpmTasks('grunt-traceur');
    grunt.loadNpmTasks('grunt-browserify');
+   grunt.loadNpmTasks('grunt-express-server');
 
-   grunt.registerTask('compile', ['react', 'traceur', 'browserify'])
+   grunt.registerTask('build', ['react', 'traceur', 'browserify'])
 
    // Default task(s).
-   grunt.registerTask('default', ['compile', 'watch']);
+   grunt.registerTask('default', ['build', 'express:dev', 'watch']);
 
 };
