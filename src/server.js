@@ -28,23 +28,11 @@ app.get("/list", (req,res) => {
    var fetcher = new Fetcher({req});
    //config can be passed to the application instance to modify all requests
    var application = new Application({fetcher});
-   var executeAction = application.context.actionInterface.executeAction;
+   var executeActionP = application.context.actionInterface.executeActionP;
 
-   Promise.all(
-      [(resolve,reject) => {
-         executeAction(readList, {}, (err) => {
-            if (err) reject(err);
-            else resolve();
-         });
-      },
-      (resolve,reject) => {
-         executeAction(getNav, {}, (err) => {
-            if (err) reject(err)
-            else resolve(); 
-         });
-      }]
-      .map((f) => {return new Promise (f)})
-   ).then(() => {
+   Promise.all([readList, getNav].map(executeActionP))
+
+   .then(() => {
       var html = React.renderComponentToString(application.getComponent());
 
       res.expose(application.context.dehydrate(), 'Context');

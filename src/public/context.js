@@ -28,6 +28,15 @@ class Context{
          executeAction (actionController, payload, done) {
             actionController(self.actionInterface, payload, done)
          },
+         //this isn't necessary for the client since they just listen for events
+         executeActionP(actionController, payload){
+            return new Promise((resolve,reject) => {
+               actionController(self.actionInterface, payload || {}, (err, result) => {
+                  if (err) reject(err)
+                  else resolve(result)
+               })
+            });
+         },
          fetcher: self.fetcher,
          getStore: self.dispatcher.getStore.bind(self.dispatcher)
       }
