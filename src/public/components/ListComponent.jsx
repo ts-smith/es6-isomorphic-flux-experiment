@@ -31,7 +31,6 @@ var ListComponent = React.createClass({
    componentDidUnmount(){this.onChange},
 
    render () {
-      console.log(this.state);
       var listItems = Object.keys(this.state.listItems).map(messageId => {
          return <p key={messageId}>{this.state.listItems[messageId]}</p>
       });
