@@ -3,6 +3,7 @@
  */
 
 var React = require('react'),
+    MessageComposer = require('./MessageComposer'),
     ListStore = require('../stores/ListStore'),
     NavStore = require('../stores/NavStore');
 
@@ -47,6 +48,7 @@ var ListComponent = React.createClass({
                <h3>Yo</h3>
                {listItems}
                <h3>End</h3>
+               <MessageComposer context={this.props.context} />
             </div>
          </div>
       );

@@ -1,10 +1,9 @@
 var Dispatcher = require('dispatchr')();
 
 class Context{
-   constructor(options){
-      options = options || {};
+   constructor({fetcher}){
       this.dispatcher = new Dispatcher({});
-      this.fetcher = options.fetcher || null;
+      this.fetcher = fetcher || null;
       this.actionInterface = this.getActionInterface();
       this.componentInterface = this.getComponentInterface();
    }

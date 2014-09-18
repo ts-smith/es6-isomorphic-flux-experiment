@@ -4,9 +4,9 @@ var http = require('http'),
     express = require('express'),
     expressState = require('express-state'),
     React = require('react/addons'),
+    bodyParser = require('body-parser'),
     Fetcher = require('fetchr'),
     Application = require('./public/app'),
-    Promise = require('es6-promise').Promise,
 
     readList = require('./public/actions/readList'),
     getNav = require('./public/actions/getNav');
@@ -22,6 +22,7 @@ app.set('views', __dirname + '/../templates');
 Fetcher.registerFetcher(require('./resource/list'));
 Fetcher.registerFetcher(require('./resource/nav'));
 
+app.use(bodyParser.json())
 app.use(Application.config.xhrPath, Fetcher.middleware());
 
 app.get("/list", (req,res) => {
