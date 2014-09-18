@@ -22,12 +22,15 @@ var ListComponent = React.createClass({
    componentDidUnmount(){this.onChange},
 
    render () {
-      var listItems = this.state.listItems.map(message => {
-         return <p key={message.id}>{message.text}</p>
+      console.log(this.state);
+      var listItems = Object.keys(this.state.listItems).map(messageId => {
+         return <p key={messageId}>{this.state.listItems[messageId]}</p>
       });
       return (
          <div className="list">
+            <h1>Yo</h1>
             {listItems}
+            <h2>End</h2>
          </div>
       );
    }

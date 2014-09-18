@@ -11,6 +11,7 @@
   "dependencies": {
     "db-migrate": "^0.7.1",
     "dispatchr": "^0.2.3",
+    "es6-promise": "^1.0.0",
     "express": "^4.9.0",
     "express-state": "^1.2.0",
     "fetchr": "^0.3.0",

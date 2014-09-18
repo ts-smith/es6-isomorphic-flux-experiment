@@ -17,7 +17,7 @@ module.exports = function(grunt) {
       },
       watch: {
          scripts: {
-            files: ['src/**/*.js'],
+            files: ['src/**/*.js*'],
             tasks: ['build'],
             options: {
                spawn: true,
@@ -71,7 +71,7 @@ module.exports = function(grunt) {
          options: {
            includeRuntime: false,
            modules: 'commonjs',
-           sourceMaps: true,
+           sourceMaps: false,
 
            arrowFunctions: true,
            classes: true,

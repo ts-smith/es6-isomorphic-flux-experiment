@@ -2,3 +2,4 @@ build
 node_modules
 public.js
 .DS_Store
+src/public/.components-compiled

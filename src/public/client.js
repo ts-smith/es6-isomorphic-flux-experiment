@@ -1,6 +1,4 @@
-'use strict';
-var traceur = require('traceur');
-    React = require('react/addons'),
+var React = require('react/addons'),
     Fetcher = require('fetchr'),
     Application = require('./app'),
     fetcher = new Fetcher({

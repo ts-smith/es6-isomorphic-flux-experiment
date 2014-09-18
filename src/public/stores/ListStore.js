@@ -2,6 +2,10 @@
 
 var BaseStore = require('dispatchr/utils/BaseStore');
 
+var handlers = {
+    'RECEIVE_LIST_ITEMS': 'receiveListItems'
+};
+
 //util.inherits(MessageStore, BaseStore);
 class ListStore extends BaseStore {
    constructor(dispatcher) {
@@ -12,7 +16,7 @@ class ListStore extends BaseStore {
    receiveListItems  (messages) {
        var self = this;
        messages.forEach(function (message) {
-           self.messages[message.id] = message;
+           self.messages[message.id] = message.text;
        });
        self.sortedByDate = Object.keys(self.messages);
        self.sortedByDate.sort((a, b) => {
@@ -26,9 +30,6 @@ class ListStore extends BaseStore {
        self.emitChange();
    }
    getAll(){
-      return this.sortedByDate;
-   }
-   getAllUnsorted() {
       return this.messages;
    }
    get(id){
@@ -48,8 +49,5 @@ class ListStore extends BaseStore {
 }
 
 ListStore.storeName = 'ListStore';
-ListStore.handlers = {
-    'RECEIVE_LIST_ITEMS': 'receiveListItems'
-};
-
+ListStore.handlers = handlers;
 module.exports = ListStore;

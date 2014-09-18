@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = function (context, unusedPayload, done) {
 
    context.fetcher.read('list', {}, {}, (err, messages) => {
