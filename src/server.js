@@ -1,3 +1,5 @@
+require('traceur');
+
 var http = require('http'),
     express = require('express'),
     expressState = require('express-state'),
@@ -21,14 +23,9 @@ app.get("/list", function(req,res) {
    var fetcher = new Fetcher({req});
    var application = new Application({fetcher});
 
-   application.preDifferentiatedContext.actionContext.executeAction(readList, {}, (err) => {
+   application.context.actionInterface.executeAction(readList, {}, (err) => {
       if (err) {
-         if (err.status && err.status === 404) {
-            next();
-         } 
-         else {
-            next(err);
-         }
+         res.error(err);
          return;
       }
       var html = React.renderComponentToString(application.getComponent());
@@ -36,11 +33,11 @@ app.get("/list", function(req,res) {
       res.expose(application.context.dehydrate(), 'Context');
 
       res.render('layout', { html }, (err, markup) => {
-         if (err) { next(err); }
          res.send(markup);
       });
    });
 });
+
 
 var port = process.env.PORT || 3000;
 http.createServer(app).listen(port);

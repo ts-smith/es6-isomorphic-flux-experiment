@@ -1,21 +1,19 @@
-'use strict';
-var PreDifferentiatedContext = require('../context'),
+var Context = require('./Context'),
     MessageStore = require('./stores/ListStore'),
-    Application = require('./components/ListComponent.js');//possibly jsx, see compiler
+    Application = require('./components/ListComponent.js');
 
-//TODO get store and components, then try this shit out
 
-PreDifferentiatedContext.registerStore(MessageStore);
+Context.registerStore(MessageStore);
 
 function App({fetcher, initialState}) {
-    this.preDifferentiatedContext = new PreDifferentiatedContext({ fetcher });
+    this.context = new Context({ fetcher });
     if (initialState) { 
         this.context.rehydrate(initialState);
     }
 }
 
 App.prototype.getComponent = function () {
-    return Application({context: this.preDifferentiatedContext.getComponentContext()});
+    return Application({context: this.context.componentInterface});
     
 };
 

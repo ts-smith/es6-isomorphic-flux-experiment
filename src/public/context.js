@@ -4,41 +4,39 @@ class Context{
    constructor(options){
       options = options || {};
       this.dispatcher = new Dispatcher({});
-      this.router = new Router(options.routes);
       this.fetcher = options.fetcher || null;
-      this.actionContext = this.getActionContext();
-      this.componentContext = this.getComponentContext();
-   },
-   getComponentContext(){
+      this.actionInterface = this.getActionInterface();
+      this.componentInterface = this.getComponentInterface();
+   }
+   getComponentInterface(){
       var self = this;
       return {
          executeAction (actionController, payload) {
-            actionController(self.actionContext, payload, (err) => {
+            actionController(self.actionInterface, payload, (err) => {
                if (err) {
                   console.error(err);
                }
             });
          },
-         getStore: self.dispatcher.getStore.bind(self.dispatcher),
-         makePath: self.router.makePath.bind(self.router)
+         getStore: self.dispatcher.getStore.bind(self.dispatcher)
       }
-   },
-   getActionContext() {
+   }
+   getActionInterface() {
       var self = this;
       return {
-         dispatch: self.dispatcher.dispatch.bind(self.dispatcher);
+         dispatch: self.dispatcher.dispatch.bind(self.dispatcher),
          executeAction (actionController, payload, done) {
-            actionController(self.actionContext, payload, done);
+            actionController(self.actionInterface, payload, done)
          },
          fetcher: self.fetcher,
          getStore: self.dispatcher.getStore.bind(self.dispatcher)
       }
-   },
+   }
    dehydrate(){
       return {
-         this.dispatcher.dehydrate()
+         dispatcher: this.dispatcher.dehydrate()
       }
-   },
+   }
    rehydrate(state){
       this.dispatcher.rehydrate(state.dispatcher || {});
    }

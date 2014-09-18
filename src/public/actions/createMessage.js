@@ -1,7 +1,5 @@
 'use strict';
 
-var ThreadStore = require('../stores/ThreadStore');
-
 module.exports = function (context, {text}, done) {
    var timestamp = Date.now();
 
