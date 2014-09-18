@@ -3,7 +3,7 @@ module.exports = function (context, unusedPayload, done) {
    context.fetcher.read('list', {}, {}, (err, messages) => {
 
       context.dispatch('RECEIVE_LIST_ITEMS', messages);
-      done();
+      done(err, messages);
 
    });
 };

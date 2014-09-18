@@ -9,6 +9,6 @@ module.exports = function (context, {text}, done) {
    };
    context.dispatch('RECEIVE_LIST_ITEMS', [message]);
    context.fetcher.create('list', message, {}, (err, messages) => {
-      done();
+      done(err,messages);
    });
 };
