@@ -1,9 +1,11 @@
 var Context = require('./Context'),
     MessageStore = require('./stores/ListStore'),
+    NavStore = require('./stores/NavStore'),
     Application = require('./components/ListComponent.js');
 
 
 Context.registerStore(MessageStore);
+Context.registerStore(NavStore);
 
 function App({fetcher, initialState}) {
     this.context = new Context({ fetcher });

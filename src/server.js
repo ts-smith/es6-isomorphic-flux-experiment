@@ -6,7 +6,10 @@ var http = require('http'),
     React = require('react/addons'),
     Fetcher = require('fetchr'),
     Application = require('./public/app'),
-    readList = require('./public/actions/readList');
+    Promise = require('es6-promise').Promise,
+
+    readList = require('./public/actions/readList'),
+    getNav = require('./public/actions/getNav');
 
 var app = express();
 expressState.extend(app);
@@ -17,17 +20,30 @@ app.set('view engine', 'jade')
 app.set('views', __dirname + '/../templates');
 
 Fetcher.registerFetcher(require('./resource/list'));
+Fetcher.registerFetcher(require('./resource/nav'));
+
 app.use(Application.config.xhrPath, Fetcher.middleware());
 
 app.get("/list", (req,res) => {
    var fetcher = new Fetcher({req});
+   //config can be passed to the application instance to modify all requests
    var application = new Application({fetcher});
+   var actionInterface = application.context.actionInterface;
 
-   application.context.actionInterface.executeAction(readList, {}, (err) => {
-      if (err) {
-         res.send(err, 500);
-         return;
-      }
+   Promise.all([ 
+      new Promise((resolve,reject) => {
+         actionInterface.executeAction(readList, {}, (err) => {
+            if (err) reject(err);
+            else resolve();
+         });
+      }),
+      new Promise((resolve,reject) => {
+         actionInterface.executeAction(getNav, {}, (err) => {
+            if (err) reject(err)
+            else resolve(); 
+         });
+      })
+   ]).then(() => {
       var html = React.renderComponentToString(application.getComponent());
 
       res.expose(application.context.dehydrate(), 'Context');
@@ -36,6 +52,9 @@ app.get("/list", (req,res) => {
          if (err) res.send(err, 500)
          else res.send(markup);
       });
+   }).catch((err) => {
+      console.error(err);
+      res.send(500);
    });
 });
 
