@@ -1,19 +1,20 @@
-var urlPattern = require('url-pattern');
+var urlPattern = require('url-pattern'),
+    _ = require("lodash");
+
 require('traceur');
 
 var config = {
-   '/routeRoot': {
+   '/something-:rootVal': {
       config: {
          data: "for this route"
       },
       get: (componentActionInterface, route, done) => {
-
       },
       "/subroute": {
          get: (componentActionInterface, route, done) => {
 
          },
-         "/sub": { },
+         "/:sub": { },
          "/zero": { }
       },
       "/anotherRouter": { }
@@ -21,26 +22,31 @@ var config = {
 }
 
 class RouteTable {
-   constructor(route){
+   constructor(route,depth){
       this.routeTable = []; 
+      this.depth = depth;
       this.route = route;
-      this.methods = [];
+      this.pattern = urlPattern.newPattern(route);
+      this.props = {};
    }
    addSubRoute(routeTable){
       this.routeTable.push(routeTable);
    }
+   addProp(prop, value){
+      this.props[prop] = value;
+   }
 }
 
 var members = ["get", "post", "delete", "put", "async", 'config'];
-var routeTable = new RouteTable("__base");
+var routes = new RouteTable("/",0);
 function walkRouteDescription(description, routeTable, layer){
    var routes = Object.keys(description);
    for (var i = 0; i < routes.length; i++){
-      var route = routes[i];
-      if (members.indexOf(route) == -1){
-         
+      var prop = routes[i];
+      if (members.indexOf(prop) == -1){
+         var route = prop;
 
-         var subTable = new RouteTable(route);
+         var subTable = new RouteTable(route, layer + 1);
 
          routeTable.addSubRoute(subTable);
 
@@ -48,7 +54,9 @@ function walkRouteDescription(description, routeTable, layer){
          console.log(layerIndent(layer), route);
 
          walkRouteDescription(subRoutes, subTable, layer + 1);
-         
+      }
+      else {
+         routeTable.addProp(prop,description[prop]);
       }
    }
 }
@@ -63,16 +71,80 @@ function layerIndent(layer){
 
 //walkRouteDescription(config), 0
 
-walkRouteDescription(config, routeTable, 0);
-console.log(JSON.stringify(routeTable, null, 2));
+walkRouteDescription(config, routes, 0);
+//console.log(JSON.stringify(routes, null, 2));
+   
 
-module.exports = {
-   config: config,
-   walkRouteDescription: walkRouteDescription
+function routePieces(route){
+   return route.split("/").map(piece => {return "/" + piece;});
 }
 
+var log = function(index, ...rest){
+   var indent = layerIndent(index);
+   console.log(indent, ...rest);
+}
+
+function getRoutePath(url, routes){
+   var pieces = routePieces(url);
+   var matches = [];
+   recursiveMatch([routes], 0); 
+   return matches;
 
 
+   function recursiveMatch(table, index){
+      //console.log("Table",table, index);
+      if(!pieces[index]) {return};
+      for (var i = 0; i < table.length; i++){
+         var route = table[i];
+         //console.log("route",route);
+         var match = route.pattern.match(pieces[index]);
+         if (match){
+            matches.push({match, route});
+            recursiveMatch(route.routeTable, index + 1 );
+            break;
+         }
+      }
+   }
+}
+
+var url = "/something-one/subroute";
+var urlTwo = "/something-two/subroute/zero";
+
+var matches = getRoutePath(url, routes);
+var matchesTwo = getRoutePath(urlTwo, routes);
+
+function routeDiffs(currentRoute, nextRoute){
+   var newParts = [];
+   for (var i = 0; i < nextRoute.length; i++){
+
+      var routeOnePart = currentRoute[i];
+      var routeTwoPart = nextRoute[i];
+
+      if (!routeOnePart){
+         newParts.push(routeTwoPart);
+         continue;
+      }
+
+      if (routeOnePart.route != routeTwoPart.route || !_.isEqual(routeOnePart.match, routeTwoPart.match)){
+         newParts.push(routeTwoPart);
+      }
+   }
+   console.log(JSON.stringify(newParts, null, 2));
+}
+routeDiffs(matches, matchesTwo);
+
+//log(0,JSON.stringify(matches, null, 2));
+
+/*
+routes.routeTable.forEach((route) => {
+   //console.log(route.pattern);
+   log(pieces[1], route.pattern);
+   log(route.pattern.match(pieces[1]));
+})
+//console.log(routes.pattern);
+
+log(routes.pattern.match(pieces[0]));
+*/
 
 
 //go over each route
