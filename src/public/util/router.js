@@ -1,4 +1,5 @@
 var urlPattern = require('url-pattern');
+require('traceur');
 
 var config = {
    '/routeRoot': {
@@ -11,10 +12,129 @@ var config = {
       "/subroute": {
          get: (componentActionInterface, route, done) => {
 
-         }
+         },
+         "/sub": { },
+         "/zero": { }
+      },
+      "/anotherRouter": { }
+   }
+}
+
+class RouteTable {
+   constructor(route){
+      this.routeTable = []; 
+      this.route = route;
+      this.methods = [];
+   }
+   addSubRoute(routeTable){
+      this.routeTable.push(routeTable);
+   }
+}
+
+var members = ["get", "post", "delete", "put", "async", 'config'];
+var routeTable = new RouteTable("__base");
+function walkRouteDescription(description, routeTable, layer){
+   var routes = Object.keys(description);
+   for (var i = 0; i < routes.length; i++){
+      var route = routes[i];
+      if (members.indexOf(route) == -1){
+         
+
+         var subTable = new RouteTable(route);
+
+         routeTable.addSubRoute(subTable);
+
+         var subRoutes = description[route];
+         console.log(layerIndent(layer), route);
+
+         walkRouteDescription(subRoutes, subTable, layer + 1);
+         
       }
    }
 }
+
+function layerIndent(layer){
+   var val = "";
+   for (var i = 0; i < layer; i++){
+      val += "\t";
+   }
+   return val;
+}
+
+//walkRouteDescription(config), 0
+
+walkRouteDescription(config, routeTable, 0);
+console.log(JSON.stringify(routeTable, null, 2));
+
+module.exports = {
+   config: config,
+   walkRouteDescription: walkRouteDescription
+}
+
+
+
+
+
+//go over each route
+   //create routing object
+   //push to list
+   //go over all sublists
+      //add them to routing object as subroutes
+      //recurse
+
+//routes.routeTable = [];
+//for route in routes.iterable:
+   //routeTable.push
+
+
+
+
+
+
+/*
+
+
+
+{
+   route: "__base",
+   routeTable: [
+      {
+         route: "/something",
+         routeTable: [],
+         methods: []
+      }
+
+   ],
+   methods: []
+
+}
+
+
+//start iteration with empty routeTable
+
+class RouteTable{
+   constructor(route, methods){
+      this.route = route; //route could be a pattern
+      this.pattern = makePattern(route);
+      this.routeTable = [];
+      this.methods = methods;
+   }
+}
+
+var baseTable = new RouteTable("",[]);
+
+recursiveGeneration(routeObject){
+    
+
+}
+
+
+//have route description
+//want to create route table
+
+
+
+
 //methods in the tree (or routes) could also defined what to do when route is left
 
 //what is the appropriate communication interface between the client?
@@ -23,6 +143,7 @@ var config = {
    //launch diff actions (oldRoute leave, route enter)
 
 
+var methods = ["get", "post", "delete", "put", "async", 'otherstuff'];
 class Router{
    constructor(config){
       this.config = config;
@@ -30,10 +151,20 @@ class Router{
       //parse out router and create routing tree
    }
    createRouteTree(config){
-      var routeTree = {};
+      var routeTable = [];
+      var noSlashes = /^\/*([^\/]*)/;
+
+
+      function recursiveGenerate(){}
+
+      //I want to map strings to the series of routes that match it
+      //so each part of the route maps to a pattern
+      //and I need to get the pattern from somewhere
+
+
       for (route in this.config){
          routeTree[route] = {
-            pattern: urlPattern.newPattern(route+"(/_theRest)");
+            pattern: urlPattern.newPattern(route);
          }
       }
    }
@@ -47,6 +178,10 @@ class Router{
 
       }
    }
+
+
+
+
    //need a diff routes method, which returns the difference between the two routes (what is a difference?)
       //is it just a routing branch below a place in the tree
 
@@ -64,3 +199,9 @@ class Router{
       
       //after all the functions are called, render a component and send it out
 }
+
+
+
+
+
+   */
