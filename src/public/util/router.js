@@ -3,21 +3,47 @@ var urlPattern = require('url-pattern'),
 
 require('traceur');
 
+//the methods can map to a function, a list of actions, a or promise
+
+//in syncronous mode
+   //the list of actions will all be run, and after they are done, the component will be rendered
+   //the function will be passed resolve and reject and must call resolve when it is done to render the whole thing
+      //function signature is componentActionInterface, params, resolve, reject
+
+//in async mode
+   //this list of actions will be collected, and the next level will be run once they are done
+   //the function will be passed componentActionInterface, params, resolve, reject
+
+   //waterfall mode
+      //the list of actions will be executed in sequence
+
+//params looks like
+/*
+   {_passed: {}, //from previous async calls
+      ..the rest 
+   }
+
+*/
+
+//how to handle redirects?
+
 var config = {
    '/something-:rootVal': {
       config: {
          data: "for this route"
       },
-      get: (componentActionInterface, route, done) => {
+      get: (componentActionInterface, params, done) => { },
+      "/": {
+         get: (componentActionInterface, params, done) => { } 
       },
       "/subroute": {
-         get: (componentActionInterface, route, done) => {
-
-         },
-         "/:sub": { },
+         get: (componentActionInterface, params, done) => { },
+         "/sub": { },
          "/zero": { }
       },
-      "/anotherRouter": { }
+      "/anotherRoute": { 
+         "/sub": { }
+      }
    }
 }
 
@@ -37,175 +63,103 @@ class RouteTable {
    }
 }
 
-var members = ["get", "post", "delete", "put", "async", 'config'];
-var routes = new RouteTable("/",0);
-function walkRouteDescription(description, routeTable, layer){
-   var routes = Object.keys(description);
-   for (var i = 0; i < routes.length; i++){
-      var prop = routes[i];
-      if (members.indexOf(prop) == -1){
-         var route = prop;
+RouteTable.members = ["always", "get", "post", "delete", "put", "async", 'config'];
 
-         var subTable = new RouteTable(route, layer + 1);
-
-         routeTable.addSubRoute(subTable);
-
-         var subRoutes = description[route];
-         console.log(layerIndent(layer), route);
-
-         walkRouteDescription(subRoutes, subTable, layer + 1);
-      }
-      else {
-         routeTable.addProp(prop,description[prop]);
-      }
+class Router{
+   constructor(routingDescription, currentRoute){
+      this.routes = new RouteTable("/",0);
+      this.generateRoutingTable(routingDescription, this.routes, 0);
+      this.currentRoute = currentRoute || "/"; //what do?
    }
-}
+   generateRoutingTable(description, routeTable, layer){
+      var routes = Object.keys(description);
+      for (var i = 0; i < routes.length; i++){
+         var prop = routes[i];
+         if (RouteTable.members.indexOf(prop) == -1){
+            var route = prop;
 
-function layerIndent(layer){
-   var val = "";
-   for (var i = 0; i < layer; i++){
-      val += "\t";
-   }
-   return val;
-}
+            var subTable = new RouteTable(route, layer + 1);
 
-//walkRouteDescription(config), 0
+            routeTable.addSubRoute(subTable);
 
-walkRouteDescription(config, routes, 0);
-//console.log(JSON.stringify(routes, null, 2));
-   
+            var subRoutes = description[route];
 
-function routePieces(route){
-   return route.split("/").map(piece => {return "/" + piece;});
-}
-
-var log = function(index, ...rest){
-   var indent = layerIndent(index);
-   console.log(indent, ...rest);
-}
-
-function getRoutePath(url, routes){
-   var pieces = routePieces(url);
-   var matches = [];
-   recursiveMatch([routes], 0); 
-   return matches;
-
-
-   function recursiveMatch(table, index){
-      //console.log("Table",table, index);
-      if(!pieces[index]) {return};
-      for (var i = 0; i < table.length; i++){
-         var route = table[i];
-         //console.log("route",route);
-         var match = route.pattern.match(pieces[index]);
-         if (match){
-            matches.push({match, route});
-            recursiveMatch(route.routeTable, index + 1 );
-            break;
+            this.generateRoutingTable(subRoutes, subTable, layer + 1);
+         }
+         else {
+            routeTable.addProp(prop,description[prop]);
          }
       }
    }
-}
+   diffUrls(current, next){
+      return this.routeDiffs(
+         this.getRoutePath(current), 
+         this.getRoutePath(next)
+      )
+   }
+   routePieces(route){
+      return route.split("/").map(piece => {return "/" + piece;});
+   }
+   getRoutePath(url){
+      var pieces = this.routePieces(url);
+      var matches = [];
+      recursiveMatch([this.routes], 0); 
+      return matches;
 
-var url = "/something-one/subroute";
-var urlTwo = "/something-two/subroute/zero";
 
-var matches = getRoutePath(url, routes);
-var matchesTwo = getRoutePath(urlTwo, routes);
-
-function routeDiffs(currentRoute, nextRoute){
-   var newParts = [];
-   for (var i = 0; i < nextRoute.length; i++){
-
-      var routeOnePart = currentRoute[i];
-      var routeTwoPart = nextRoute[i];
-
-      if (!routeOnePart){
-         newParts.push(routeTwoPart);
-         continue;
-      }
-
-      if (routeOnePart.route != routeTwoPart.route || !_.isEqual(routeOnePart.match, routeTwoPart.match)){
-         newParts.push(routeTwoPart);
+      function recursiveMatch(table, index){
+         if(!pieces[index]) {return};
+         for (var i = 0; i < table.length; i++){
+            var route = table[i];
+            var match = route.pattern.match(pieces[index]);
+            if (match){
+               matches.push({match, route});
+               recursiveMatch(route.routeTable, index + 1 );
+               return;
+            }
+         }
+         console.log("Warning: Route part \"" + pieces[index] + "\" of \"" + url + "\" not matched");
       }
    }
-   console.log(JSON.stringify(newParts, null, 2));
-}
-routeDiffs(matches, matchesTwo);
+   routeDiffs(currentRoute, nextRoute){
+      for (var i = 0; i < nextRoute.length; i++){
 
-//log(0,JSON.stringify(matches, null, 2));
+         var currentRoutePart = currentRoute[i];
+         var nextRoutePart = nextRoute[i];
 
-/*
-routes.routeTable.forEach((route) => {
-   //console.log(route.pattern);
-   log(pieces[1], route.pattern);
-   log(route.pattern.match(pieces[1]));
-})
-//console.log(routes.pattern);
+         if (!currentRoutePart || currentRoutePart.route != nextRoutePart.route || !_.isEqual(currentRoutePart.match, nextRoutePart.match)){
+            return nextRoute.slice(i);
+         }
+      }
+      return [];
+   }
 
-log(routes.pattern.match(pieces[0]));
-*/
+   loadApplication(application){}
+   runRoute(url, {method, noDiff}) {
+      var actionPath = this.getRoutePath(url);
 
-
-//go over each route
-   //create routing object
-   //push to list
-   //go over all sublists
-      //add them to routing object as subroutes
-      //recurse
-
-//routes.routeTable = [];
-//for route in routes.iterable:
-   //routeTable.push
-
-
-
-
-
-
-/*
-
-
-
-{
-   route: "__base",
-   routeTable: [
-      {
-         route: "/something",
-         routeTable: [],
-         methods: []
+      if (!noDiff){
+         var oldPath = this.getRoutePath(this.currentRoute);
+         actionPath = routeDiffs(oldPath, actionPath);
       }
 
-   ],
-   methods: []
-
-}
-
-
-//start iteration with empty routeTable
-
-class RouteTable{
-   constructor(route, methods){
-      this.route = route; //route could be a pattern
-      this.pattern = makePattern(route);
-      this.routeTable = [];
-      this.methods = methods;
+      this.currentRoute = url;
    }
 }
 
-var baseTable = new RouteTable("",[]);
 
-recursiveGeneration(routeObject){
-    
+var url = "/something-one/subroute/sub";
+var urlTwo = "/something-one/anotherRoute/sub";
+var urlErr = "/something-one/anotherRoute/sub/er1/er2";
+var withRoot = "/something-one/";
 
-}
-
-
-//have route description
-//want to create route table
+var router = new Router(config);
 
 
+//console.log(router.diffUrls(url, urlTwo));
+console.log(router.diffUrls(urlTwo, withRoot));
 
+/*
 
 //methods in the tree (or routes) could also defined what to do when route is left
 
@@ -213,49 +167,6 @@ recursiveGeneration(routeObject){
    //send route action
    //create route diff (how to I get old route, and in what format?) a store? this isn't really for the interface. does it fit with the architecture?
    //launch diff actions (oldRoute leave, route enter)
-
-
-var methods = ["get", "post", "delete", "put", "async", 'otherstuff'];
-class Router{
-   constructor(config){
-      this.config = config;
-      this.createRouteTree();
-      //parse out router and create routing tree
-   }
-   createRouteTree(config){
-      var routeTable = [];
-      var noSlashes = /^\/*([^\/]*)/;
-
-
-      function recursiveGenerate(){}
-
-      //I want to map strings to the series of routes that match it
-      //so each part of the route maps to a pattern
-      //and I need to get the pattern from somewhere
-
-
-      for (route in this.config){
-         routeTree[route] = {
-            pattern: urlPattern.newPattern(route);
-         }
-      }
-   }
-   //tells the router what component to render to when done routing, where to get the context from
-   regsiterApplication(application){}
-
-   diffRoutes(route){
-      for (routeBase in this.routeTree){
-      
-         if         
-
-      }
-   }
-
-
-
-
-   //need a diff routes method, which returns the difference between the two routes (what is a difference?)
-      //is it just a routing branch below a place in the tree
 
    //routing is calling actions with the context of a given application, recursively
 
