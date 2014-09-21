@@ -27,6 +27,125 @@ require('traceur');
 
 //how to handle redirects?
 
+//need to understand/write
+   //pathAction structure
+      var example = { params: {},
+                      route: 
+                   //    { routeTable: [Object],
+                   //      depth: 2,
+                         route: '/anotherRoute',
+                   //      pattern: [Object],
+                         props: {} 
+                       } 
+                    }
+   //executePathActionP
+   //callPathFunction
+   //getResult (shorthand for executePathActionP and callPathFunction self dispatcher, not necessary)
+      //also includes place for "method", which would be passed in to the entire function, and would then dispatch the selected method instead of just calling the "always" function
+   //render, or what to do when done
+
+
+//these functions could be part of some pathAction prototype
+function actionType(pathAction){
+   var action = pathAction.route.props.always;
+   var async = pathAction.route.props.async;
+
+   if (!action){
+      return {type: false, async: false};
+   }
+   if (_.isArray(action)){
+      return {type: "array", async};
+   }
+   else return {type: "function", async};
+}
+
+function executePathActionP(pathAction){
+   //returns a promise
+}
+function callPathFunction(pathAction){
+   //somehow also returns a promise
+
+   //the function needs to follow a precise function signature
+
+   //it will be called with some values somehow
+
+   //this function creates the promise, takes reject and resolve, and passes them, and other things, into the function
+}
+
+
+function runPathActions(pathActions){
+
+   var index = 0;
+   var actionsPromises = [];
+
+   runPathAction( pathActions[0], makeNext(pathActions[1]) )
+
+   function makeNext(pathAction){
+
+      if (actionPromises[index + 1]) return function(result){
+         ++index;
+         runPathAction( pathAction, makeNext(pathActions[index]), result )
+      }
+      else return false;
+   }
+
+   function runPathAction(action, next, previousResult);
+
+      if (next){
+
+         var {type, async} = actionType(action);
+
+         if ( async){
+            //maybe collect the result here or not
+            if ( !type ){
+               next();
+            }
+            else if ( type == "array" ){
+               Promise.all(
+                  action.map( executePathActionP )
+               )
+               .then(function(results){
+                  next(results);
+               });
+            }
+            else {
+               //assuming it is function
+               callPathFunction(action, previousResults)
+
+               .then(function(result){
+                  next(result);
+               });
+            }
+
+         }
+         //sync
+         else {
+            if ( type == "array" ){
+               Array.prototype.push.apply(actionsPromises, pathAction.map(executePathActionP) );
+            }
+            else if ( type == "function" ){
+               actionsPromises.push( callPathFunction(pathAction, previousResults) );
+            }
+            next();
+         }
+      }
+      else {
+         //async irrelevant
+         //run action
+         actionPromises.push(getResults(pathAction));
+         //also run method function
+         actionPromises.push(getResults(pathAction, method));
+            //this needs to be captured differently
+         //wait for all to be done
+         Promise.all( actionPromises )
+         .then(function(){
+            //render or something
+         })
+      }
+   }
+}
+
+
 var config = {
    '/something-:rootVal': {
       config: {
@@ -98,7 +217,12 @@ class Router{
       )
    }
    routePieces(route){
-      return route.split("/").map(piece => {return "/" + piece;});
+      var internalRoute;
+      if (route[route.length - 1] === "/"){
+         internalRoute = route.slice(0,-1);
+      }
+      else internalRoute = route;
+      return internalRoute.split("/").map(piece => {return "/" + piece;});
    }
    getRoutePath(url){
       var pieces = this.routePieces(url);
@@ -113,7 +237,7 @@ class Router{
             var route = table[i];
             var match = route.pattern.match(pieces[index]);
             if (match){
-               matches.push({match, route});
+               matches.push({params: match, route});
                recursiveMatch(route.routeTable, index + 1 );
                return;
             }
@@ -134,7 +258,9 @@ class Router{
       return [];
    }
 
-   loadApplication(application){}
+   registerContext(context){
+      this.context = context;
+   }
    runRoute(url, {method, noDiff}) {
       var actionPath = this.getRoutePath(url);
 
@@ -157,7 +283,8 @@ var router = new Router(config);
 
 
 //console.log(router.diffUrls(url, urlTwo));
-console.log(router.diffUrls(urlTwo, withRoot));
+//console.log(router.diffUrls(urlTwo, withRoot));
+console.log(router.diffUrls(withRoot, urlTwo));
 
 /*
 
