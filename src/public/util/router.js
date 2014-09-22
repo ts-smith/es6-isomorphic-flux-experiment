@@ -17,29 +17,9 @@ require('traceur');
    //waterfall mode
       //the list of actions will be executed in sequence
 
-//params looks like
-/*
-   {_passed: {}, //from previous async calls
-      ..the rest 
-   }
-
-*/
-
 //how to handle redirects?
 
 //need to understand/write
-   //pathAction structure
-      var example = { params: {},
-                      route: 
-                   //    { routeTable: [Object],
-                   //      depth: 2,
-                         route: '/anotherRoute',
-                   //      pattern: [Object],
-                         props: {} 
-                       } 
-                    }
-   //executePathActionP
-   //callPathFunction
    //getResult (shorthand for executePathActionP and callPathFunction self dispatcher, not necessary)
       //also includes place for "method", which would be passed in to the entire function, and would then dispatch the selected method instead of just calling the "always" function
    //render, or what to do when done
@@ -59,91 +39,7 @@ function actionType(pathAction){
    else return {type: "function", async};
 }
 
-function executePathActionP(pathAction){
-   //returns a promise
-}
-function callPathFunction(pathAction){
-   //somehow also returns a promise
 
-   //the function needs to follow a precise function signature
-
-   //it will be called with some values somehow
-
-   //this function creates the promise, takes reject and resolve, and passes them, and other things, into the function
-}
-
-
-function runPathActions(pathActions){
-
-   var index = 0;
-   var actionsPromises = [];
-
-   runPathAction( pathActions[0], makeNext(pathActions[1]) )
-
-   function makeNext(pathAction){
-
-      if (actionPromises[index + 1]) return function(result){
-         ++index;
-         runPathAction( pathAction, makeNext(pathActions[index]), result )
-      }
-      else return false;
-   }
-
-   function runPathAction(action, next, previousResult);
-
-      if (next){
-
-         var {type, async} = actionType(action);
-
-         if ( async){
-            //maybe collect the result here or not
-            if ( !type ){
-               next();
-            }
-            else if ( type == "array" ){
-               Promise.all(
-                  action.map( executePathActionP )
-               )
-               .then(function(results){
-                  next(results);
-               });
-            }
-            else {
-               //assuming it is function
-               callPathFunction(action, previousResults)
-
-               .then(function(result){
-                  next(result);
-               });
-            }
-
-         }
-         //sync
-         else {
-            if ( type == "array" ){
-               Array.prototype.push.apply(actionsPromises, pathAction.map(executePathActionP) );
-            }
-            else if ( type == "function" ){
-               actionsPromises.push( callPathFunction(pathAction, previousResults) );
-            }
-            next();
-         }
-      }
-      else {
-         //async irrelevant
-         //run action
-         actionPromises.push(getResults(pathAction));
-         //also run method function
-         actionPromises.push(getResults(pathAction, method));
-            //this needs to be captured differently
-         //wait for all to be done
-         Promise.all( actionPromises )
-         .then(function(){
-            //render or something
-         })
-      }
-   }
-}
 
 
 var config = {
@@ -151,12 +47,9 @@ var config = {
       config: {
          data: "for this route"
       },
-      get: (componentActionInterface, params, done) => { },
-      "/": {
-         get: (componentActionInterface, params, done) => { } 
-      },
+      always: (componentActionInterface, params, previousResult, resolve, reject) => { },
       "/subroute": {
-         get: (componentActionInterface, params, done) => { },
+         get: (componentActionInterface, params, previousResult, resolve, reject) => { },
          "/sub": { },
          "/zero": { }
       },
@@ -270,6 +163,99 @@ class Router{
       }
 
       this.currentRoute = url;
+   }
+      var example = { params: {},
+                      route: 
+                         route: '/anotherRoute',
+                         props: {} 
+                       } 
+                    }
+   executePathActionP(pathAction){
+      return Promise.all (
+         pathAction.route.props.always.map(this.context.actionInterface.executeActionP)
+      )
+   }
+   callPathFunction(pathAction, previousResults){
+      var action = pathAction.route.props.always;
+      return new Promise((resolve, reject) => {
+         action(
+            this.context.actionInferface, 
+            pathAction.params, 
+            previousResults, 
+            resolve, reject
+         );
+      });
+   }
+
+
+   runPathActions(pathActions){
+
+      var index = 0;
+      var actionsPromises = [];
+
+      runPathAction( pathActions[0], makeNext(pathActions[1]) )
+
+      function makeNext(pathAction){
+
+         if (actionPromises[index + 1]) return function(result){
+            ++index;
+            runPathAction( pathAction, makeNext(pathActions[index]), result )
+         }
+         else return false;
+      }
+
+      function runPathAction(action, next, previousResult);
+
+         if (next){
+
+            var {type, async} = actionType(action);
+
+            //this whole mess could be refactored way better
+            if ( async){
+               if ( !type ){
+                  next();
+               }
+               else if ( type == "array" ){
+                  this.executePathActionP(action)
+                  .then(function(results){
+                     next(results);
+                  });
+               }
+               else {
+                  //assuming it is function
+                  this.callPathFunction(action, previousResults)
+
+                  .then(function(result){
+                     next(result);
+                  });
+               }
+
+            }
+            //sync
+            else {
+               if ( type == "array" ){
+                  Array.prototype.push.apply( actionsPromises, this.executePathActionP(action) );
+               }
+               else if ( type == "function" ){
+                  actionsPromises.push( this.callPathFunction(action, previousResults) );
+               }
+               next();
+            }
+         }
+         else {
+            //async irrelevant
+            //run action
+            actionPromises.push(getResults(pathAction));
+            //also run method function
+            actionPromises.push(getResults(pathAction, method));
+               //this needs to be captured differently
+            //wait for all to be done
+            Promise.all( actionPromises )
+            .then(function(){
+               //render or something
+            })
+         }
+      }
    }
 }
 

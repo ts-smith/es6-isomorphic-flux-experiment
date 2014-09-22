@@ -7,6 +7,6 @@ es6-isomorphic-flux-experiment
 
 TODO: 
 
-  Create an arbitrarily nested self managing component (should this use come interesting isomorphic router?)
+  Create an arbitrarily nested self managing component (should this use some interesting isomorphic router?)
 
   Create example which inlines action controller (why?)
