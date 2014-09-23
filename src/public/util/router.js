@@ -30,21 +30,50 @@ function actionType(pathAction, method = "always"){
 
 var config = {
    '/something-:rootVal': {
-      config: {
-         data: "for this route"
-      },
+      config: { data: "for this route" },
+      async: true,
       always: (componentActionInterface, params, resolve, reject) => { 
-         console.log("/something-:rootVal action", params);
+         console.log("/something-:rootVal always", params);
+         console.log("async action");
+         setTimeout(()=>{
+
+            console.log("done");
+            resolve();
+         }, 1000);
       },
       "/subroute": {
+         always: (componentActionInterface, params, resolve, reject) => {
+            console.log("/subroute always", params);
+            resolve();
+         },
          get: (componentActionInterface, params, resolve, reject) => { 
             console.log("/subroute get", params);
+            resolve();
          },
-         "/sub": { },
+         "/sub": { 
+            get: (componentActionInterface, params, resolve, reject) => {
+               console.log("/sub get", params);
+               resolve();
+            }
+         },
          "/zero": { }
       },
       "/anotherRoute": { 
-         "/sub": { }
+         async: true,
+         always: (componentActionInterface, params, resolve, reject) => {
+            console.log("/anotherRoute always");
+            console.log("async");
+            setTimeout(() => {
+               console.log("done");
+               resolve();
+            },500)
+         },
+         "/sub": {
+            get: (componentActionInterface, params, resolve, reject) => {
+               console.log("/sub get");
+               resolve();
+            }
+         },
       }
    }
 }
@@ -168,23 +197,33 @@ class Router{
    }
 
    runPathActions(pathActions, method){
+      console.log("actions: " + JSON.stringify(
+         pathActions.map(action => {return action.route.route}), 
 
-      var index = 0;
+      null, 2));
+
+      var index = 1;
       var actionPromises = [];
       var self = this;
 
-      runPathAction( pathActions[0], makeNext(pathActions[1]) )
+      if (pathActions[0]) {
+         runPathAction( pathActions[0], makeNext(pathActions[index]) )
+      }
+      else {
+         console.log("no actions (nonsense route?)");
+      }
 
       function makeNext(pathAction){
 
-         if (pathActions[index + 1]) return function(){
+         if (pathAction) return function(){
             ++index;
-            runPathAction( pathAction, makeNext(pathActions[index]))
+            runPathAction( pathAction, makeNext(pathActions[index]));
          }
          else return false;
       }
 
       function runPathAction(action, next){
+         console.log("running action " + action.route.route);
 
          if (next){
 
@@ -204,14 +243,20 @@ class Router{
             }
          }
          else {
+            console.log('end of line');
             //async irrelevant
             actionPromises.push(self.executePathActionP(action));
             actionPromises.push(self.executePathActionP(action, method));
 
+            console.log("methods executed");
+
             Promise.all( actionPromises )
             .then(() => {
-               console.log("complete: ", actionPromises)
+               console.log("complete")
                //render or something
+            })
+            .catch(err => {
+               console.error("error: ", err);
             })
             //.catch {stop prop, possibly redirect}
          }
@@ -220,9 +265,9 @@ class Router{
 }
 
 
-var url = "/something-one/subroute/sub";
-var urlTwo = "/something-one/anotherRoute/sub";
-var urlErr = "/something-one/anotherRoute/sub/er1/er2";
+var url =      "/something-one/subroute/sub";
+var urlTwo =   "/something-one/anotherRoute/sub";
+var urlErr =   "/something-one/anotherRoute/sub/er1/er2";
 var withRoot = "/something-one/";
 
 var router = new Router(config);
@@ -230,8 +275,42 @@ router.registerContext({});
 
 var routeDiffs = router.diffUrls(withRoot, urlTwo);
 
-console.log(routeDiffs);
+//console.log(routeDiffs);
 
+console.log("route: " + url)
 router.runRoute(url);
-router.runRoute(urlTwo);
-router.runRoute(withRoot);
+setTimeout(() => {
+   console.log("\n\n");
+   console.log("route: " + urlTwo)
+   router.runRoute(urlTwo);
+
+
+
+   setTimeout(() => {
+      console.log("\n\n"); 
+      console.log("route: " + withRoot)
+      router.runRoute(withRoot);
+
+
+      setTimeout(() => {
+         console.log("\n\n");
+         console.log("with un matched route");
+         console.log("route: " + urlErr)
+         router.runRoute(urlErr);
+
+
+         setTimeout(() => {
+            console.log("\n\n");
+            console.log("nested async skip");
+            console.log("route: " + urlTwo);
+            router.runRoute(urlErr);
+         },1000);
+
+      },1000);
+
+
+   }, 1000)
+
+
+},2000);
+//router.runRoute(withRoot);
