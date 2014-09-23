@@ -3,20 +3,6 @@ var urlPattern = require('url-pattern'),
 
 require('traceur');
 
-//the methods can map to a function, a list of actions, a or promise
-
-//in syncronous mode
-   //the list of actions will all be run, and after they are done, the component will be rendered
-   //the function will be passed resolve and reject and must call resolve when it is done to render the whole thing
-      //function signature is componentActionInterface, params, resolve, reject
-
-//in async mode
-   //this list of actions will be collected, and the next level will be run once they are done
-   //the function will be passed componentActionInterface, params, resolve, reject
-
-   //waterfall mode
-      //the list of actions will be executed in sequence
-
 //how to handle redirects?
 
 //need to understand/write
@@ -26,8 +12,8 @@ require('traceur');
 
 
 //these functions could be part of some pathAction prototype
-function actionType(pathAction){
-   var action = pathAction.route.props.always;
+function actionType(pathAction, method = "always"){
+   var action = pathAction.route.props[method];
    var async = pathAction.route.props.async;
 
    if (!action){
@@ -47,9 +33,13 @@ var config = {
       config: {
          data: "for this route"
       },
-      always: (componentActionInterface, params, previousResult, resolve, reject) => { },
+      always: (componentActionInterface, params, resolve, reject) => { 
+         console.log("/something-:rootVal action", params);
+      },
       "/subroute": {
-         get: (componentActionInterface, params, previousResult, resolve, reject) => { },
+         get: (componentActionInterface, params, resolve, reject) => { 
+            console.log("/subroute get", params);
+         },
          "/sub": { },
          "/zero": { }
       },
@@ -78,10 +68,10 @@ class RouteTable {
 RouteTable.members = ["always", "get", "post", "delete", "put", "async", 'config'];
 
 class Router{
-   constructor(routingDescription, currentRoute){
+   constructor(routingDescription, currentRoute = "/"){
       this.routes = new RouteTable("/",0);
       this.generateRoutingTable(routingDescription, this.routes, 0);
-      this.currentRoute = currentRoute || "/"; //what do?
+      this.currentRoute = currentRoute;
    }
    generateRoutingTable(description, routeTable, layer){
       var routes = Object.keys(description);
@@ -154,106 +144,76 @@ class Router{
    registerContext(context){
       this.context = context;
    }
-   runRoute(url, {method, noDiff}) {
+   runRoute(url, method = "get", {noDiff} = {}) {
       var actionPath = this.getRoutePath(url);
 
       if (!noDiff){
          var oldPath = this.getRoutePath(this.currentRoute);
-         actionPath = routeDiffs(oldPath, actionPath);
+         actionPath = this.routeDiffs(oldPath, actionPath);
       }
 
+      this.runPathActions(actionPath, method);
       this.currentRoute = url;
    }
-      var example = { params: {},
-                      route: 
-                         route: '/anotherRoute',
-                         props: {} 
-                       } 
-                    }
-   executePathActionP(pathAction){
-      return Promise.all (
-         pathAction.route.props.always.map(this.context.actionInterface.executeActionP)
+   executePathActionP(pathAction, method = "always"){
+      var action = pathAction.route.props[method];
+
+      if (_.isArray(action)) return Promise.all (
+            action.map(this.context.actionInterface.executeActionP)
       )
-   }
-   callPathFunction(pathAction, previousResults){
-      var action = pathAction.route.props.always;
-      return new Promise((resolve, reject) => {
-         action(
-            this.context.actionInferface, 
-            pathAction.params, 
-            previousResults, 
-            resolve, reject
-         );
-      });
+      else if (_.isFunction(action)) return new Promise((resolve, reject) => {
+         action( this.context.actionInferface, pathAction.params, resolve, reject );
+      })
+      else return Promise.resolve();
    }
 
-
-   runPathActions(pathActions){
+   runPathActions(pathActions, method){
 
       var index = 0;
-      var actionsPromises = [];
+      var actionPromises = [];
+      var self = this;
 
       runPathAction( pathActions[0], makeNext(pathActions[1]) )
 
       function makeNext(pathAction){
 
-         if (actionPromises[index + 1]) return function(result){
+         if (pathActions[index + 1]) return function(){
             ++index;
-            runPathAction( pathAction, makeNext(pathActions[index]), result )
+            runPathAction( pathAction, makeNext(pathActions[index]))
          }
          else return false;
       }
 
-      function runPathAction(action, next, previousResult);
+      function runPathAction(action, next){
 
          if (next){
 
-            var {type, async} = actionType(action);
+            var async = action.route.props.async;
 
-            //this whole mess could be refactored way better
             if ( async){
-               if ( !type ){
-                  next();
-               }
-               else if ( type == "array" ){
-                  this.executePathActionP(action)
-                  .then(function(results){
-                     next(results);
-                  });
-               }
-               else {
-                  //assuming it is function
-                  this.callPathFunction(action, previousResults)
-
-                  .then(function(result){
-                     next(result);
-                  });
-               }
-
+                  self.executePathActionP(action)
+                  .then(next)
+                  //.catch {stop prop, possibly redirect}
+                  .catch(err => {
+                     console.error(err);
+                  })
             }
-            //sync
             else {
-               if ( type == "array" ){
-                  Array.prototype.push.apply( actionsPromises, this.executePathActionP(action) );
-               }
-               else if ( type == "function" ){
-                  actionsPromises.push( this.callPathFunction(action, previousResults) );
-               }
+               actionPromises.push( self.executePathActionP(action) );
                next();
             }
          }
          else {
             //async irrelevant
-            //run action
-            actionPromises.push(getResults(pathAction));
-            //also run method function
-            actionPromises.push(getResults(pathAction, method));
-               //this needs to be captured differently
-            //wait for all to be done
+            actionPromises.push(self.executePathActionP(action));
+            actionPromises.push(self.executePathActionP(action, method));
+
             Promise.all( actionPromises )
-            .then(function(){
+            .then(() => {
+               console.log("complete: ", actionPromises)
                //render or something
             })
+            //.catch {stop prop, possibly redirect}
          }
       }
    }
@@ -266,38 +226,12 @@ var urlErr = "/something-one/anotherRoute/sub/er1/er2";
 var withRoot = "/something-one/";
 
 var router = new Router(config);
+router.registerContext({});
 
+var routeDiffs = router.diffUrls(withRoot, urlTwo);
 
-//console.log(router.diffUrls(url, urlTwo));
-//console.log(router.diffUrls(urlTwo, withRoot));
-console.log(router.diffUrls(withRoot, urlTwo));
+console.log(routeDiffs);
 
-/*
-
-//methods in the tree (or routes) could also defined what to do when route is left
-
-//what is the appropriate communication interface between the client?
-   //send route action
-   //create route diff (how to I get old route, and in what format?) a store? this isn't really for the interface. does it fit with the architecture?
-   //launch diff actions (oldRoute leave, route enter)
-
-   //routing is calling actions with the context of a given application, recursively
-
-   //have a method for initiating routing on the client side
-      //route to ('url') should diff the route against the current route and call all the actions in the diff
-      //if no optimize is set, use the whole tree
-
-      //calling done isn't necessary on client (although knowing when all route functions have completed could be useful)
-
-   //have a method for handling routing on the server
-      //needs to go over object, and create routes for it
-      //for each mapped route, it should then execute the function specified.
-      
-      //after all the functions are called, render a component and send it out
-}
-
-
-
-
-
-   */
+router.runRoute(url);
+router.runRoute(urlTwo);
+router.runRoute(withRoot);

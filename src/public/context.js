@@ -8,36 +8,34 @@ class Context{
       this.componentInterface = this.getComponentInterface();
    }
    getComponentInterface(){
-      var self = this;
       return {
          executeAction (actionController, payload) {
-            actionController(self.actionInterface, payload, (err) => {
+            actionController(this.actionInterface, payload, (err) => {
                if (err) {
                   console.error(err);
                }
             });
          },
-         getStore: self.dispatcher.getStore.bind(self.dispatcher)
+         getStore: this.dispatcher.getStore.bind(this.dispatcher)
       }
    }
    getActionInterface() {
-      var self = this;
       return {
-         dispatch: self.dispatcher.dispatch.bind(self.dispatcher),
+         dispatch: this.dispatcher.dispatch.bind(this.dispatcher),
          executeAction (actionController, payload, done) {
-            actionController(self.actionInterface, payload, done)
+            actionController(this.actionInterface, payload, done)
          },
          //this isn't necessary for the client since they just listen for events
          executeActionP(actionController, payload){
             return new Promise((resolve,reject) => {
-               actionController(self.actionInterface, payload || {}, (err, result) => {
+               actionController(this.actionInterface, payload || {}, (err, result) => {
                   if (err) reject(err)
                   else resolve(result)
                })
             });
          },
-         fetcher: self.fetcher,
-         getStore: self.dispatcher.getStore.bind(self.dispatcher)
+         fetcher: this.fetcher,
+         getStore: this.dispatcher.getStore.bind(this.dispatcher)
       }
    }
    dehydrate(){
