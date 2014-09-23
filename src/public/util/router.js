@@ -3,30 +3,7 @@ var urlPattern = require('url-pattern'),
 
 require('traceur');
 
-//how to handle redirects?
-
-//need to understand/write
-   //getResult (shorthand for executePathActionP and callPathFunction self dispatcher, not necessary)
-      //also includes place for "method", which would be passed in to the entire function, and would then dispatch the selected method instead of just calling the "always" function
-   //render, or what to do when done
-
-
-//these functions could be part of some pathAction prototype
-function actionType(pathAction, method = "always"){
-   var action = pathAction.route.props[method];
-   var async = pathAction.route.props.async;
-
-   if (!action){
-      return {type: false, async: false};
-   }
-   if (_.isArray(action)){
-      return {type: "array", async};
-   }
-   else return {type: "function", async};
-}
-
-
-
+//how to handle redirects? use reject?
 
 var config = {
    '/something-:rootVal': {
@@ -181,8 +158,8 @@ class Router{
          actionPath = this.routeDiffs(oldPath, actionPath);
       }
 
-      this.runPathActions(actionPath, method);
       this.currentRoute = url;
+      return this.runPathActions(actionPath, method);
    }
    executePathActionP(pathAction, method = "always"){
       var action = pathAction.route.props[method];
@@ -206,61 +183,70 @@ class Router{
       var actionPromises = [];
       var self = this;
 
-      if (pathActions[0]) {
-         runPathAction( pathActions[0], makeNext(pathActions[index]) )
-      }
-      else {
-         console.log("no actions (nonsense route?)");
-      }
 
-      function makeNext(pathAction){
+      return new Promise((resolve,reject) => {
 
-         if (pathAction) return function(){
-            ++index;
-            runPathAction( pathAction, makeNext(pathActions[index]));
-         }
-         else return false;
-      }
-
-      function runPathAction(action, next){
-         console.log("running action " + action.route.route);
-
-         if (next){
-
-            var async = action.route.props.async;
-
-            if ( async){
-                  self.executePathActionP(action)
-                  .then(next)
-                  //.catch {stop prop, possibly redirect}
-                  .catch(err => {
-                     console.error(err);
-                  })
-            }
-            else {
-               actionPromises.push( self.executePathActionP(action) );
-               next();
-            }
+         if (pathActions[0]) {
+            runPathAction( pathActions[0], makeNext(pathActions[index]) )
          }
          else {
-            console.log('end of line');
-            //async irrelevant
-            actionPromises.push(self.executePathActionP(action));
-            actionPromises.push(self.executePathActionP(action, method));
-
-            console.log("methods executed");
-
-            Promise.all( actionPromises )
-            .then(() => {
-               console.log("complete")
-               //render or something
-            })
-            .catch(err => {
-               console.error("error: ", err);
-            })
-            //.catch {stop prop, possibly redirect}
+            console.log("no actions (nonsense route?)");
+            resolve();
          }
-      }
+
+         function makeNext(pathAction){
+
+            if (pathAction) return function(){
+               ++index;
+               runPathAction( pathAction, makeNext(pathActions[index]));
+            }
+            else return false;
+         }
+
+
+         function runPathAction(action, next){
+            console.log("running action " + action.route.route);
+
+            if (next){
+
+               var async = action.route.props.async;
+
+               if (async){
+                     self.executePathActionP(action)
+                     .then(next)
+                     //.catch {stop prop, possibly redirect}
+                     .catch(err => {
+                        console.error(err);
+                        reject("wat");
+                     })
+               }
+               else {
+                  actionPromises.push( self.executePathActionP(action) );
+                  next();
+               }
+            }
+            else {
+               console.log('end of line');
+               //async irrelevant
+               actionPromises.push(self.executePathActionP(action));
+               actionPromises.push(self.executePathActionP(action, method));
+
+               console.log("methods executed");
+
+               Promise.all( actionPromises )
+               .then(() => {
+                  console.log("complete")
+                  //render or something
+                  resolve();
+               })
+               .catch(err => {
+                  console.error("error: ", err);
+                  reject("wat");
+               })
+               //.catch {stop prop, possibly redirect}
+            }
+         }
+      });
    }
 }
 
@@ -278,39 +264,30 @@ var routeDiffs = router.diffUrls(withRoot, urlTwo);
 //console.log(routeDiffs);
 
 console.log("route: " + url)
-router.runRoute(url);
-setTimeout(() => {
+router.runRoute(url)
+
+.then(() => {
    console.log("\n\n");
    console.log("route: " + urlTwo)
-   router.runRoute(urlTwo);
+   return router.runRoute(urlTwo)
+})
 
+.then(() => {
+   console.log("\n\n"); 
+   console.log("route: " + withRoot)
+   return router.runRoute(withRoot);
+})
 
+.then(() => {
+   console.log("\n\n");
+   console.log("with un matched route");
+   console.log("route: " + urlErr)
+   return router.runRoute(urlErr, "post");
+})
 
-   setTimeout(() => {
-      console.log("\n\n"); 
-      console.log("route: " + withRoot)
-      router.runRoute(withRoot);
-
-
-      setTimeout(() => {
-         console.log("\n\n");
-         console.log("with un matched route");
-         console.log("route: " + urlErr)
-         router.runRoute(urlErr);
-
-
-         setTimeout(() => {
-            console.log("\n\n");
-            console.log("nested async skip");
-            console.log("route: " + urlTwo);
-            router.runRoute(urlErr);
-         },1000);
-
-      },1000);
-
-
-   }, 1000)
-
-
-},2000);
-//router.runRoute(withRoot);
+.then(() => {
+   console.log("\n\n");
+   console.log("nested async skip");
+   console.log("route: " + urlTwo);
+   return router.runRoute(urlTwo);
+})
