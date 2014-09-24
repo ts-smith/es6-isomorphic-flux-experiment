@@ -30,24 +30,7 @@ RouteTable.members = ["always", "trunk", "leaf", "get", "post", "delete", "put",
 class Router{
    constructor(routingDescription){
       this.routes = new RouteTable("/",0);
-      this.generateRoutingTable(routingDescription, this.routes, 0);
-   }
-   instance(context, currentRoute = "/"){
-      var self = this;
-      return {
-         context, currentRoute, 
-         runRoute: function (url, method = "get", {noDiff} = {}) {
-            var actionPath = self.getRoutePath(url);
-
-            if (!noDiff){
-               var oldPath = self.getRoutePath(this.currentRoute);
-               actionPath = self.routeDiffs(oldPath, actionPath);
-            }
-
-            this.currentRoute = url;
-            return self.runPathActions(this.context, actionPath, method);
-         }
-      }
+      this.generateRoutingTable(routingDescription["/"] || routingDescription, this.routes, 0);
    }
    generateRoutingTable(description, routeTable, layer){
       var routes = Object.keys(description);
@@ -69,6 +52,23 @@ class Router{
          }
       }
    }
+   instance(context, currentRoute = "/"){
+      var self = this;
+      return {
+         context, currentRoute, 
+         runRoute: function (url, method = "get", {noDiff} = {}) {
+            var actionPath = self.getRoutePath(url);
+
+            if (!noDiff){
+               var oldPath = self.getRoutePath(this.currentRoute);
+               actionPath = self.routeDiffs(oldPath, actionPath);
+            }
+
+            this.currentRoute = url;
+            return self.runPathActions(this.context, actionPath, method);
+         }
+      }
+   }
    diffUrls(current, next){
       return this.routeDiffs(
          this.getRoutePath(current), 
@@ -86,6 +86,7 @@ class Router{
    //route table state
    getRoutePath(url){
       var pieces = this.routePieces(url);
+      console.log(pieces);
       var matches = [];
       recursiveMatch([this.routes], 0); 
       if (matches[matches.length - 1]){

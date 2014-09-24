@@ -29,7 +29,7 @@ app.use(Application.config.xhrPath, Fetcher.middleware());
 
 var router = new Router(routes);
 
-app.get("/list", (req,res) => {
+app.get("/oldList", (req,res) => {
    var fetcher = new Fetcher({req});
    //config can be passed to the application instance to modify all requests
    var application = new Application({fetcher});
