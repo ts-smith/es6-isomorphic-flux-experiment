@@ -9,7 +9,9 @@ var http = require('http'),
     Application = require('./public/app'),
 
     readList = require('./public/actions/readList'),
-    getNav = require('./public/actions/getNav');
+    getNav = require('./public/actions/getNav'),
+    Router = require('./public/util/router'),
+    routes = require('./public/routes');
 
 var app = express();
 expressState.extend(app);
@@ -24,6 +26,8 @@ Fetcher.registerFetcher(require('./resource/nav'));
 
 app.use(bodyParser.json())
 app.use(Application.config.xhrPath, Fetcher.middleware());
+
+var router = new Router(routes);
 
 app.get("/list", (req,res) => {
    var fetcher = new Fetcher({req});
@@ -50,6 +54,29 @@ app.get("/list", (req,res) => {
 
 app.use(express.static(__dirname + "/../assets/"));
 
+app.use((req, res, next) => {
+   var fetcher = new Fetcher({req});
+   var application = new Application({fetcher, router});
+
+   application.runRoute(req.url, req.method.toLowerCase(), {noDiff: true})
+
+   .then(() => {
+
+      var html = React.renderComponentToString(application.getComponent());
+
+      res.expose(application.context.dehydrate(), 'Context');
+
+      res.render('layout', { html }, (err, markup) => {
+         if (err) res.send(err, 500)
+         else res.send(markup);
+
+      });
+   })
+   .catch(err => {
+      console.err(err);
+      res.send(500);
+   });
+});
 
 var port = process.env.PORT || 3000;
 http.createServer(app).listen(port);

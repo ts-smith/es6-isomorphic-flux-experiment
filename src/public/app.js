@@ -7,10 +7,13 @@ var Context = require('./Context'),
 Context.registerStore(MessageStore);
 Context.registerStore(NavStore);
 
-function App({fetcher, initialState}) {
+function App({fetcher, initialState, router}) {
     this.context = new Context({ fetcher });
+    if (router) {
+       this.router = router.instance(this.context);
+    }
     if (initialState) { 
-        this.context.rehydrate(initialState);
+       this.context.rehydrate(initialState);
     }
 }
 
@@ -18,6 +21,12 @@ App.prototype.getComponent = function () {
     return Application({context: this.context.componentInterface});
     
 };
+App.prototype.runRoute = function(...args){
+   if (this.router){
+      return this.router.runRoute(...args);
+   }
+   else return Promise.reject();
+}
 
 module.exports = App;
 module.exports.config = {

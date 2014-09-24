@@ -5,55 +5,7 @@ require('traceur');
 
 //how to handle redirects? use reject?
 
-var config = {
-   '/something-:rootVal': {
-      config: { data: "for this route" },
-      async: true,
-      always: (componentActionInterface, params, resolve, reject) => { 
-         console.log("/something-:rootVal always", params);
-         console.log("async action");
-         setTimeout(()=>{
-
-            console.log("done");
-            resolve();
-         }, 1000);
-      },
-      "/subroute": {
-         always: (componentActionInterface, params, resolve, reject) => {
-            console.log("/subroute always", params);
-            resolve();
-         },
-         get: (componentActionInterface, params, resolve, reject) => { 
-            console.log("/subroute get", params);
-            resolve();
-         },
-         "/sub": { 
-            get: (componentActionInterface, params, resolve, reject) => {
-               console.log("/sub get", params);
-               resolve();
-            }
-         },
-         "/zero": { }
-      },
-      "/anotherRoute": { 
-         async: true,
-         always: (componentActionInterface, params, resolve, reject) => {
-            console.log("/anotherRoute always");
-            console.log("async");
-            setTimeout(() => {
-               console.log("done");
-               resolve();
-            },500)
-         },
-         "/sub": {
-            get: (componentActionInterface, params, resolve, reject) => {
-               console.log("/sub get");
-               resolve();
-            }
-         },
-      }
-   }
-}
+//possible to diff actions and not routes?
 
 class RouteTable {
    constructor(route,depth){
@@ -71,13 +23,31 @@ class RouteTable {
    }
 }
 
-RouteTable.members = ["always", "get", "post", "delete", "put", "async", 'config'];
+RouteTable.members = ["always", "trunk", "leaf", "get", "post", "delete", "put", "async", 'config'];
+//trunk is called when not terminal
+//leaf is called when terminal
 
 class Router{
-   constructor(routingDescription, currentRoute = "/"){
+   constructor(routingDescription){
       this.routes = new RouteTable("/",0);
       this.generateRoutingTable(routingDescription, this.routes, 0);
-      this.currentRoute = currentRoute;
+   }
+   instance(context, currentRoute = "/"){
+      var self = this;
+      return {
+         context, currentRoute, 
+         runRoute: function (url, method = "get", {noDiff} = {}) {
+            var actionPath = self.getRoutePath(url);
+
+            if (!noDiff){
+               var oldPath = self.getRoutePath(this.currentRoute);
+               actionPath = self.routeDiffs(oldPath, actionPath);
+            }
+
+            this.currentRoute = url;
+            return self.runPathActions(this.context, actionPath, method);
+         }
+      }
    }
    generateRoutingTable(description, routeTable, layer){
       var routes = Object.keys(description);
@@ -113,15 +83,21 @@ class Router{
       else internalRoute = route;
       return internalRoute.split("/").map(piece => {return "/" + piece;});
    }
+   //route table state
    getRoutePath(url){
       var pieces = this.routePieces(url);
       var matches = [];
       recursiveMatch([this.routes], 0); 
+      if (matches[matches.length - 1]){
+         matches[matches.length - 1].terminal = true;
+      }
       return matches;
 
 
       function recursiveMatch(table, index){
+
          if(!pieces[index]) {return};
+
          for (var i = 0; i < table.length; i++){
             var route = table[i];
             var match = route.pattern.match(pieces[index]);
@@ -147,33 +123,19 @@ class Router{
       return [];
    }
 
-   registerContext(context){
-      this.context = context;
-   }
-   runRoute(url, method = "get", {noDiff} = {}) {
-      var actionPath = this.getRoutePath(url);
-
-      if (!noDiff){
-         var oldPath = this.getRoutePath(this.currentRoute);
-         actionPath = this.routeDiffs(oldPath, actionPath);
-      }
-
-      this.currentRoute = url;
-      return this.runPathActions(actionPath, method);
-   }
-   executePathActionP(pathAction, method = "always"){
+   executePathActionP(context, pathAction, method = "always"){
       var action = pathAction.route.props[method];
 
       if (_.isArray(action)) return Promise.all (
-            action.map(this.context.actionInterface.executeActionP)
+            action.map(context.actionInterface.executeActionP)
       )
       else if (_.isFunction(action)) return new Promise((resolve, reject) => {
-         action( this.context.actionInferface, pathAction.params, resolve, reject );
+         action( context.actionInterface, pathAction.params, resolve, reject );
       })
       else return Promise.resolve();
    }
 
-   runPathActions(pathActions, method){
+   runPathActions(context, pathActions, method){
       console.log("actions: " + JSON.stringify(
          pathActions.map(action => {return action.route.route}), 
 
@@ -212,24 +174,28 @@ class Router{
                var async = action.route.props.async;
 
                if (async){
-                     self.executePathActionP(action)
+                     Promise.all(
+                        [self.executePathActionP(context, action)
+                        ,self.executePathActionP(context, action, "trunk")]
+                     )
                      .then(next)
                      //.catch {stop prop, possibly redirect}
                      .catch(err => {
                         console.error(err);
-                        reject("wat");
                      })
                }
                else {
-                  actionPromises.push( self.executePathActionP(action) );
+                  actionPromises.push( self.executePathActionP(context, action) );
+                  actionPromises.push( self.executePathActionP(context, action, "trunk") );
                   next();
                }
             }
             else {
                console.log('end of line');
                //async irrelevant
-               actionPromises.push(self.executePathActionP(action));
-               actionPromises.push(self.executePathActionP(action, method));
+               actionPromises.push(self.executePathActionP(context, action));
+               actionPromises.push(self.executePathActionP(context, action, method));
+               actionPromises.push(self.executePathActionP(context, action, "leaf"));
 
                console.log("methods executed");
 
@@ -250,19 +216,21 @@ class Router{
    }
 }
 
+module.exports = Router;
 
-var url =      "/something-one/subroute/sub";
-var urlTwo =   "/something-one/anotherRoute/sub";
-var urlErr =   "/something-one/anotherRoute/sub/er1/er2";
-var withRoot = "/something-one/";
+//var url =      "/something-one/subroute/sub";
+//var urlTwo =   "/something-one/anotherRoute/sub";
+//var urlErr =   "/something-one/anotherRoute/sub/er1/er2";
+//var withRoot = "/something-one/";
 
-var router = new Router(config);
-router.registerContext({});
+//var router = new Router(config);
+//router.registerContext({});
 
-var routeDiffs = router.diffUrls(withRoot, urlTwo);
+//var routeDiffs = router.diffUrls(withRoot, urlTwo);
 
 //console.log(routeDiffs);
 
+/*
 console.log("route: " + url)
 router.runRoute(url)
 
@@ -291,3 +259,4 @@ router.runRoute(url)
    console.log("route: " + urlTwo);
    return router.runRoute(urlTwo);
 })
+*/

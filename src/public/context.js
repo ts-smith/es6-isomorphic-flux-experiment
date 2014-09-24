@@ -8,9 +8,10 @@ class Context{
       this.componentInterface = this.getComponentInterface();
    }
    getComponentInterface(){
+      var self = this;
       return {
          executeAction (actionController, payload) {
-            actionController(this.actionInterface, payload, (err) => {
+            actionController(self.actionInterface, payload, (err) => {
                if (err) {
                   console.error(err);
                }
@@ -20,22 +21,23 @@ class Context{
       }
    }
    getActionInterface() {
+      var self = this;
       return {
-         dispatch: this.dispatcher.dispatch.bind(this.dispatcher),
+         dispatch: self.dispatcher.dispatch.bind(self.dispatcher),
          executeAction (actionController, payload, done) {
-            actionController(this.actionInterface, payload, done)
+            actionController(self.actionInterface, payload, done)
          },
          //this isn't necessary for the client since they just listen for events
          executeActionP(actionController, payload){
             return new Promise((resolve,reject) => {
-               actionController(this.actionInterface, payload || {}, (err, result) => {
+               actionController(self.actionInterface, payload || {}, (err, result) => {
                   if (err) reject(err)
                   else resolve(result)
                })
             });
          },
-         fetcher: this.fetcher,
-         getStore: this.dispatcher.getStore.bind(this.dispatcher)
+         fetcher: self.fetcher,
+         getStore: self.dispatcher.getStore.bind(self.dispatcher)
       }
    }
    dehydrate(){
