@@ -13,7 +13,6 @@ var DiffLink = React.createClass({
    },
    ref: ref,
    runActions(event){
-      //console.log(this);
 
       if (window.history && window.history.pushState){
          event.stopPropagation();
@@ -36,9 +35,7 @@ var DiffLink = React.createClass({
                if (this.props.atomic){
                   context.rehydrate(newState);
                }
-               //html 5 history stuff
 
-               //React.unmountComponentAtNode(mountNode);
                React.renderComponent(application.getComponent(), mountNode);
             }
          });      

@@ -1,7 +1,5 @@
 var Dispatcher = require('dispatchr')();
 
-var serial = 0;
-
 class Context{
    constructor({fetcher, router}){
       this.dispatcher = new Dispatcher({});
@@ -23,7 +21,6 @@ class Context{
    getComponentInterface(){
       var self = this;
       return {
-         id: serial++,
          executeAction (actionController, payload) {
             actionController(self.actionInterface, payload, (err) => {
                if (err) {
