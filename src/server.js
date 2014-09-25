@@ -58,7 +58,7 @@ app.use((req, res, next) => {
    var fetcher = new Fetcher({req});
    var application = new Application({fetcher, router});
 
-   application.runRoute(req.url, req.method.toLowerCase(), {noDiff: true})
+   application.context.router.runRoute(req.url, req.method.toLowerCase(), {noDiff: true})
 
    .then(() => {
 

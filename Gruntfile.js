@@ -131,7 +131,7 @@ module.exports = function(grunt) {
          dist: {
             files: {
                'assets/public.js': ['build/public/**/*.js']
-            }
+            },
          }
       },
       express: {

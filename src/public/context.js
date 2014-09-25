@@ -1,15 +1,29 @@
 var Dispatcher = require('dispatchr')();
 
+var serial = 0;
+
 class Context{
-   constructor({fetcher}){
+   constructor({fetcher, router}){
       this.dispatcher = new Dispatcher({});
       this.fetcher = fetcher || null;
+      if (typeof window !== "undefined" && window.location && window.location.pathname) {
+         this.router = router && router.instance(this, window.location.pathname);
+      }
+      else {
+         this.router = router && router.instance(this);
+      }
       this.actionInterface = this.getActionInterface();
       this.componentInterface = this.getComponentInterface();
+   }
+   clone(){
+      var newContext = new Context({fetcher: this.fetcher, router: window.__router})
+      newContext.rehydrate(this.dehydrate());
+      return newContext;
    }
    getComponentInterface(){
       var self = this;
       return {
+         id: serial++,
          executeAction (actionController, payload) {
             actionController(self.actionInterface, payload, (err) => {
                if (err) {

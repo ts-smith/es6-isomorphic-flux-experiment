@@ -1,5 +1,7 @@
 var readList = require('./actions/readList'),
-    getNav = require('./actions/getNav');
+    getNav = require('./actions/getNav'),
+    setNavProp = require("./actions/setNavProp"),
+    async = require("./actions/asyncTask");
 
 
 var config = {
@@ -11,8 +13,44 @@ var config = {
          ai.executeActionP(getNav).then(r);
       },
       '/list': {
-         get: [readList]
+         get: (ai, params, resolve, reject) => {
+            Promise.all([
+               ai.executeActionP(readList),
+               ai.executeActionP(setNavProp, {view: "list"})
+            ]).then(resolve);
+         }
       },
+      '/something-else': {
+         get: (ai, params, resolve, reject) => {
+            //console.log("setting nav prop", setNavProp);
+            ai.executeActionP(setNavProp, {view: "something-else"}).then(resolve).
+            catch(console.error);
+         }
+      },
+      '/async': {
+         async: true,
+         always: (ai, params, resolve, reject) => {
+            ai.executeActionP(async.longTask)
+            .then(() => {
+               return ai.executeActionP(setNavProp, {view: "async"});
+            })
+            .then(resolve);
+         },
+         '/one': {
+            get: (ai, params, resolve, reject) => {
+               ai.executeActionP(async.smallTask, "one").then(resolve);
+            }
+         },
+         '/two': {
+            get: (ai, params, resolve, reject) => {
+               ai.executeActionP(async.smallTask, "two").then(resolve);
+            }
+         }
+      }
+   }
+}
+module.exports = config;
+/*
       '/something-:rootVal': {
          config: { data: "for this route" },
          async: true,
@@ -60,6 +98,4 @@ var config = {
             },
          }
       }
-   }
-}
-module.exports = config;
+*/

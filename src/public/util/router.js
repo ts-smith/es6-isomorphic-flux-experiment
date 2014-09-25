@@ -1,7 +1,6 @@
 var urlPattern = require('url-pattern'),
     _ = require("lodash");
 
-require('traceur');
 
 //how to handle redirects? use reject?
 
@@ -52,14 +51,14 @@ class Router{
          }
       }
    }
-   instance(context, currentRoute = "/"){
+   instance(context, currentRoute){
       var self = this;
       return {
          context, currentRoute, 
          runRoute: function (url, method = "get", {noDiff} = {}) {
             var actionPath = self.getRoutePath(url);
 
-            if (!noDiff){
+            if (!noDiff && currentRoute){
                var oldPath = self.getRoutePath(this.currentRoute);
                actionPath = self.routeDiffs(oldPath, actionPath);
             }
@@ -86,7 +85,7 @@ class Router{
    //route table state
    getRoutePath(url){
       var pieces = this.routePieces(url);
-      console.log(pieces);
+      //console.log(pieces);
       var matches = [];
       recursiveMatch([this.routes], 0); 
       if (matches[matches.length - 1]){
@@ -168,7 +167,8 @@ class Router{
 
 
          function runPathAction(action, next){
-            console.log("running action " + action.route.route);
+
+            //console.log("running action " + action.route.route);
 
             if (next){
 
@@ -192,17 +192,17 @@ class Router{
                }
             }
             else {
-               console.log('end of line');
+               //console.log('end of line');
                //async irrelevant
                actionPromises.push(self.executePathActionP(context, action));
                actionPromises.push(self.executePathActionP(context, action, method));
                actionPromises.push(self.executePathActionP(context, action, "leaf"));
 
-               console.log("methods executed");
+               //console.log("methods executed");
 
                Promise.all( actionPromises )
                .then(() => {
-                  console.log("complete")
+                  //console.log("complete")
                   //render or something
                   resolve();
                })
