@@ -36,7 +36,11 @@ var ListComponent = React.createClass({
       this.NavStore.addChangeListener(this.onChange);
       this.AsyncStore.addChangeListener(this.onChange);
    },
-   componentDidUnmount(){this.onChange error},
+   componentWillUnmount(){
+      this.ListStore.removeChangeListener(this.onChange);
+      this.NavStore.removeChangeListener(this.onChange);
+      this.AsyncStore.removeChangeListener(this.onChange);
+   },
 
    render () {
       var listItems = Object.keys(this.state.listItems).map(messageId => {

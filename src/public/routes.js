@@ -9,7 +9,6 @@ var config = {
       trunk: [getNav],
       //always: [getNav],
       get: function(ai,p,r){
-         console.log("what");
          ai.executeActionP(getNav).then(r);
       },
       '/list': {

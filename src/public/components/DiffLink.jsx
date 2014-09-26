@@ -5,7 +5,7 @@ var React = require('react');
 var ref = { serial: 0, overtake: false };
 
 var DiffLink = React.createClass({
-   getDefaultProps: function() {
+   getDefaultProps () {
       return {
          atomic: true,
          noOptimize: false
@@ -19,7 +19,6 @@ var DiffLink = React.createClass({
 
          var transitionContext = this.props.atomic ? context.clone() : context;
 
-         console.log(this.ref.overtake);
          history[this.ref.overtake ? "replaceState" : "pushState"] ({}, "", this.props.href);
 
          var contextId = this.ref.serial++;
@@ -33,6 +32,7 @@ var DiffLink = React.createClass({
                history.replaceState(newState, "", this.props.href);
 
                if (this.props.atomic){
+                  transitionContext = null;
                   context.rehydrate(newState);
                }
 

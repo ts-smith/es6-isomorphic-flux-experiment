@@ -28,11 +28,9 @@ window.mountNode = document.getElementById('app');
 window.__router = router;
 
 window.onpopstate = function(event) {
-   console.log(event.state);
 
    context.rehydrate(event.state);
 
-   //blegh
    React.renderComponent(application.getComponent(), mountNode);
    
 };
