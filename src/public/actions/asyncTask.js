@@ -8,7 +8,7 @@ actions.longTask = function (context, unusedPayload, done) {
       context.dispatch('RECEIVE_SOME_DATA', [1,2,3]);
       done();
 
-   }, 2500);
+   }, 2000);
 };
 
 actions.smallTask = function(context, text, done){
