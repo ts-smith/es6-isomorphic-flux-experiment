@@ -48,7 +48,7 @@ class NavStore extends BaseStore {
    rehydrate({username, specialTabs, routingValues}){
       this.username = username;
       this.specialTabs = specialTabs;
-      this.routingValues = routingValues;
+      this.routingValues = _.clone(routingValues);
    }
 
 }
