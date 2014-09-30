@@ -29,36 +29,15 @@ app.use(Application.config.xhrPath, Fetcher.middleware());
 
 var router = new Router(routes);
 
-app.get("/oldList", (req,res) => {
-   var fetcher = new Fetcher({req});
-   //config can be passed to the application instance to modify all requests
-   var application = new Application({fetcher});
-   var executeActionP = application.context.actionInterface.executeActionP;
-
-   Promise.all([readList, getNav].map(executeActionP))
-
-   .then(() => {
-      var html = React.renderComponentToString(application.getComponent());
-
-      res.expose(application.context.dehydrate(), 'Context');
-
-      res.render('layout', { html }, (err, markup) => {
-         if (err) res.send(err, 500)
-         else res.send(markup);
-      });
-   }).catch((err) => {
-      console.error(err);
-      res.send(500);
-   });
-});
-
 app.use(express.static(__dirname + "/../assets/"));
 
 app.use((req, res, next) => {
    var fetcher = new Fetcher({req});
    var application = new Application({fetcher, router});
 
-   application.context.router.runRoute(req.url, req.method.toLowerCase(), {noDiff: true})
+   console.log(req.url);
+
+   router.runRoute(application.context, req.url, {method: req.method.toLowerCase()})
 
    .then(() => {
 

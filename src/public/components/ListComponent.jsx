@@ -49,21 +49,22 @@ var ListComponent = React.createClass({
 
       var view;
 
-      switch (this.state.routingInfo.view){
+      var viewKey = this.state.routingInfo.view;
+      switch (viewKey){
          case "something-else": view = (
-            <div className="something-else">
+            <div className="something-else" key={viewKey}>
                <p> this is another view determined by an arbitrary routing prop-erty </p>
             </div>
          ); break;
          case "async": view = (
-            <div> isnt that something
+            <div key={viewKey}> isnt that something
                <p> "{this.state.data}" took a long time to get </p>
                <p> "{this.state.text}" took a short time to get </p>
             </div>
          ); break;
          case "list": 
          default: view = (
-            <div className="list">
+            <div className="list" key={viewKey}>
                <h3>Yo</h3>
                {listItems}
                <h3>End</h3>

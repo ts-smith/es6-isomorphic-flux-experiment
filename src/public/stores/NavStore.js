@@ -6,8 +6,8 @@ var BaseStore = require('dispatchr/utils/BaseStore');
 
 var handlers = {
    'RECEIVE_NAV_DETAILS': 'receiveNavDetails',
-   'RECEIVE_ROUTING_VALUES': 'receiveRoutingValues'
-   
+   'RECEIVE_ROUTING_VALUES': 'receiveRoutingValues',
+   'NAVIGATION': 'receiveRoutingValues'
 };
 
 //util.inherits(MessageStore, BaseStore);

@@ -10,16 +10,16 @@ Context.registerStore(NavStore);
 Context.registerStore(AsyncStore);
 
 function App({fetcher, initialState, router}) {
-    this.context = new Context({ fetcher, router });
-    this.otherContext = new Context({ fetcher, router });
-    if (initialState) { 
-       this.context.rehydrate(initialState);
-    }
+   this.context = new Context({ fetcher });
+   this.router = router;
+   
+   if (initialState) { 
+      this.context.rehydrate(initialState);
+   }
 }
-var serial = 0;
 
 App.prototype.getComponent = function () {
-    return Application({context: this.context.componentInterface, key: serial++});
+    return Application({context: this.context.componentInterface});
 };
 
 module.exports = App;

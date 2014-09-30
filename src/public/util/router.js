@@ -1,4 +1,5 @@
 var urlPattern = require('url-pattern'),
+    querystring = require('querystring'),
     _ = require("lodash");
 
 
@@ -51,22 +52,21 @@ class Router{
          }
       }
    }
-   instance(context, currentRoute){
-      var self = this;
-      return {
-         context, currentRoute, 
-         runRoute: function (url, method = "get", {noDiff} = {}) {
-            var actionPath = self.getRoutePath(url);
+   runRoute (context, url, options) {
+      var {currentRoute, method} = _.defaults(options,{
+         currentRoute: null,
+         method: "get"
+      });
 
-            if (!noDiff && currentRoute){
-               var oldPath = self.getRoutePath(this.currentRoute);
-               actionPath = self.routeDiffs(oldPath, actionPath);
-            }
+      var actionPath = this.getRoutePath(url);
 
-            this.currentRoute = url;
-            return self.runPathActions(this.context, actionPath, method);
-         }
+      if (currentRoute){
+         var oldPath = this.getRoutePath(currentRoute);
+         actionPath = this.routeDiffs(oldPath, actionPath);
       }
+
+      this.currentRoute = url;
+      return this.runPathActions(context, actionPath, method);
    }
    diffUrls(current, next){
       return this.routeDiffs(
@@ -80,17 +80,28 @@ class Router{
          internalRoute = route.slice(0,-1);
       }
       else internalRoute = route;
-      return internalRoute.split("/").map(piece => {return "/" + piece;});
+
+      var [pureRoute, params] = internalRoute.split("?");
+
+      var pieces = pureRoute.split("/").map(piece => {return "/" + piece;});
+
+      return {pieces, params: querystring.parse(params)};
+
    }
    //route table state
    getRoutePath(url){
-      var pieces = this.routePieces(url);
+      var {pieces, params} = this.routePieces(url);
       //console.log(pieces);
       var matches = [];
       recursiveMatch([this.routes], 0); 
       if (matches[matches.length - 1]){
          matches[matches.length - 1].terminal = true;
       }
+
+      if (matches){
+         _.assign(matches[matches.length -1].params, params);
+      }
+
       return matches;
 
 
@@ -153,7 +164,7 @@ class Router{
          }
          else {
             console.log("no actions (nonsense route?)");
-            resolve();
+            resolve(context);
          }
 
          function makeNext(pathAction){
@@ -204,7 +215,7 @@ class Router{
                .then(() => {
                   //console.log("complete")
                   //render or something
-                  resolve();
+                  resolve(context);
                })
                .catch(err => {
                   console.error("error: ", err);

@@ -6,6 +6,7 @@ var React = require('react/addons'),
     fetcher = new Fetcher({
         xhrPath: Application.config.xhrPath
     }),
+    Navigator = require("./util/navigator"),
     dehydratedState = App && App.Context; // Sent from the server
 
 window.React = React; // For chrome dev tool support
@@ -16,21 +17,31 @@ var application = new Application({
     fetcher, router,
     initialState: dehydratedState
 });
-window.context = application.context;
+
+Navigator.setApplication(application);
 
 var app = application.getComponent(),
     mountNode = document.getElementById('app');
 
 React.renderComponent(app, mountNode);
 
-window.application = application;
-window.mountNode = document.getElementById('app');
-window.__router = router;
+Navigator.onNavigate( (dehydratedContext, url) => {
+   application.context.rehydrate(dehydratedContext);
+   history.pushState(dehydratedContext, "", url);
+
+   application.context.actionInterface.dispatch("NAVIGATION");
+});
 
 window.onpopstate = function(event) {
 
-   context.rehydrate(event.state);
+   //this is super defensive and should never not be true now
+   if (event.state){
+      application.context.rehydrate(event.state);
 
-   React.renderComponent(application.getComponent(), mountNode);
+      application.context.actionInterface.dispatch("NAVIGATION");
+   }
+   else {
+      location.reload();
+   }
    
 };
