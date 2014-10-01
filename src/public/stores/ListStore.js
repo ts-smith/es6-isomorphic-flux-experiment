@@ -13,8 +13,6 @@ class ListStore extends BaseStore {
       this.dispatcher = dispatcher;
       this.messages = {};
       this.sortedByDate = [];
-
-      this.lastUpdate = 0;
       this.listeners = 0;
    }
    getContext (mainContext){
@@ -57,8 +55,6 @@ class ListStore extends BaseStore {
            }
            return 0;
        });
-
-       self.lastUpdate = new Date();
       
        self.emitChange();
    }
@@ -70,19 +66,13 @@ class ListStore extends BaseStore {
    }
    dehydrate(){
       return {
-         lastUpdate: this.lastUpdate,
          messages: this.messages,
          sortedByData: this.sortedByDate
       }
    }
-   rehydrate({lastUpdate, messages, sortedByDate}){
-      var newState = new Date(lastUpdate);
-
-      if (this.lastUpdate < newState){
-         this.lastUpdate = lastUpdate;
-         this.messages = messages;
-         this.sortedbyDate = sortedByDate;
-      }
+   rehydrate({messages, sortedByDate}){
+      this.messages = messages;
+      this.sortedbyDate = sortedByDate;
    }
 }
 

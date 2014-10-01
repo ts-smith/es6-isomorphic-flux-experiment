@@ -18,6 +18,8 @@ var application = new Application({
     initialState: dehydratedState
 });
 
+application.currentRoute = location.pathname + location.search; 
+
 Navigator.setApplication(application);
 
 application.context.actionInterface.dispatch("ON_CLIENT", application.context.actionInterface);
@@ -30,23 +32,17 @@ React.renderComponent(
 
 
 
-Navigator.onNavigate( (dehydratedContext, url) => {
+Navigator.onNavigate( (dehydratedContext, url, reactive) => {
+
+   if (!reactive){
+      history.pushState(null, "", url);
+   }
+
+   application.currentRoute = location.pathname + location.search; 
+
    application.context.rehydrate(dehydratedContext);
-   history.pushState(dehydratedContext, "", url);
 
    application.context.actionInterface.dispatch("NAVIGATION");
 });
 
-window.onpopstate = function(event) {
-
-   //this is super defensive and should never not be true now
-   if (event.state){
-      application.context.rehydrate(event.state);
-
-      application.context.actionInterface.dispatch("NAVIGATION");
-   }
-   else {
-      location.reload();
-   }
-   
-};
+window.onpopstate = Navigator.receiveNavigation;

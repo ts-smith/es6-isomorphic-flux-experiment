@@ -2,6 +2,7 @@ var _ = require("lodash");
 
 var app = null;
 var navigationCallback = _.noop;
+var currentRoute;
 
 function setApplication(application){
    app = application;
@@ -25,7 +26,7 @@ function navigateTo(href){
 
    var transitionContext = app.context.clone();
 
-   var currentRoute = location.pathname + location.search;
+   var currentRoute = app.currentRoute;
 
    app.router.runRoute(transitionContext, href, {currentRoute})
 
@@ -37,13 +38,31 @@ function navigateTo(href){
    });
 
 }
+function receiveNavigation(){
+   var transitionContext = app.context.clone();
+
+   var previousRoute = app.currentRoute;
+   var receivedRoute = location.pathname + location.search;
+
+   app.router.runRoute(transitionContext, receivedRoute, {currentRoute: previousRoute})
+
+   .then( last( _.partialRight(emitNavigation, null, true) ) )
+
+   .catch (err => {
+      transitionContext = null;
+      console.error(err);
+   });
 
 
-function emitNavigation(newContext, url){
+
+}
+
+
+function emitNavigation(newContext, url, reactive = false){
 
    var newState = newContext.dehydrate();
 
-   navigationCallback(newState, url); 
+   navigationCallback(newState, url, reactive); 
 }
 
 function onNavigate(callback){
@@ -53,5 +72,6 @@ function onNavigate(callback){
 module.exports = {
    setApplication,
    navigateTo,
+   receiveNavigation,
    onNavigate
 }
