@@ -13,10 +13,12 @@ class ListStore extends BaseStore {
       this.dispatcher = dispatcher;
       this.messages = {};
       this.sortedByDate = [];
+
+      this.lastUpdate = 0;
       this.listeners = 0;
    }
-   getContext (context){
-      this.context = context;
+   getContext (mainContext){
+      this.context = mainContext;
 
       //could check for listeners and recursively update list here
       //could have a navigation complete event
@@ -55,6 +57,9 @@ class ListStore extends BaseStore {
            }
            return 0;
        });
+
+       self.lastUpdate = new Date();
+      
        self.emitChange();
    }
    getAll(){
@@ -65,15 +70,20 @@ class ListStore extends BaseStore {
    }
    dehydrate(){
       return {
+         lastUpdate: this.lastUpdate,
          messages: this.messages,
          sortedByData: this.sortedByDate
       }
    }
-   rehydrate({messages, sortedByDate}){
-      this.messages = messages;
-      this.sortedbyDate = sortedByDate;
-   }
+   rehydrate({lastUpdate, messages, sortedByDate}){
+      var newState = new Date(lastUpdate);
 
+      if (this.lastUpdate < newState){
+         this.lastUpdate = lastUpdate;
+         this.messages = messages;
+         this.sortedbyDate = sortedByDate;
+      }
+   }
 }
 
 ListStore.storeName = 'ListStore';
