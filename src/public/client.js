@@ -20,10 +20,15 @@ var application = new Application({
 
 Navigator.setApplication(application);
 
-var app = application.getComponent(),
-    mountNode = document.getElementById('app');
+application.context.actionInterface.dispatch("ON_CLIENT", application.context.actionInterface);
 
-React.renderComponent(app, mountNode);
+React.renderComponent(
+   application.getComponent(),
+   document.getElementById('app')
+);
+
+
+
 
 Navigator.onNavigate( (dehydratedContext, url) => {
    application.context.rehydrate(dehydratedContext);
