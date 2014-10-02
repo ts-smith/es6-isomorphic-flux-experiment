@@ -127,7 +127,7 @@ class Router{
          var currentRoutePart = currentRoute[i];
          var nextRoutePart = nextRoute[i];
 
-         if (!currentRoutePart || currentRoutePart.route != nextRoutePart.route || !_.isEqual(currentRoutePart.match, nextRoutePart.match)){
+         if (!currentRoutePart || currentRoutePart.route != nextRoutePart.route || !_.isEqual(currentRoutePart.params, nextRoutePart.params)){
             return nextRoute.slice(i);
          }
       }

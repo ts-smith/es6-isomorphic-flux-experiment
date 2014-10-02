@@ -1,13 +1,10 @@
 var Context = require('./Context'),
-    MessageStore = require('./stores/ListStore'),
+    PresentationStore = require('./stores/PresentationStore'),
     NavStore = require('./stores/NavStore'),
-    AsyncStore = require('./stores/AsyncStore'),
-    Application = require('./components/ListComponent.js');
+    Application = require('./components/Application.js');
 
-
-Context.registerStore(MessageStore);
+Context.registerStore(PresentationStore);
 Context.registerStore(NavStore);
-Context.registerStore(AsyncStore);
 
 function App({fetcher, initialState, router}) {
    this.context = new Context({ fetcher });

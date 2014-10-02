@@ -8,8 +8,6 @@ var http = require('http'),
     Fetcher = require('fetchr'),
     Application = require('./public/app'),
 
-    readList = require('./public/actions/readList'),
-    getNav = require('./public/actions/getNav'),
     Router = require('./public/util/router'),
     routes = require('./public/routes');
 
@@ -20,9 +18,6 @@ app.set('state namespace', 'App');
 
 app.set('view engine', 'jade')
 app.set('views', __dirname + '/../templates');
-
-Fetcher.registerFetcher(require('./resource/list'));
-Fetcher.registerFetcher(require('./resource/nav'));
 
 app.use(bodyParser.json())
 app.use(Application.config.xhrPath, Fetcher.middleware());
@@ -48,9 +43,10 @@ app.use((req, res, next) => {
          else res.send(markup);
 
       });
+
    })
    .catch(err => {
-      console.err(err);
+      console.error(err);
       res.send(500);
    });
 });

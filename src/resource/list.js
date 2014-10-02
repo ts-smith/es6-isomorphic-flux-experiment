@@ -38,7 +38,6 @@ module.exports = {
        callback(null, _messages);
     },
     create(req, resource, params, body, config, callback) {
-         console.log("creation");
         _messages.push({
             id: params.id,
             text: params.text
