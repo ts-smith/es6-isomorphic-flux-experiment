@@ -4,15 +4,13 @@ var React = require('react');
 
 
 var slides = [
-   <div>
+   <div style={{backgroundImage: "url(https://i.imgur.com/He7zOrR.jpg)"}}>
       <p>some neat content</p>
    </div>,
 
-   <div>
-      <img src="https://i.imgur.com/eWlGSdR.jpg" />
-   </div>,
+   <div style={{backgroundImage: "url(https://i.imgur.com/eWlGSdR.jpg)", backgroundSize: "600px"}} />,
 
-   <div>
+   <div style={{ backgroundImage: "url(https://i.imgur.com/m6m0FhB.jpg)"}}>
       <p>other</p>
       <p>stuff</p>
    </div>

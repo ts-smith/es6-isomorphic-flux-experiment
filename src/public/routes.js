@@ -1,5 +1,5 @@
-var _ = require('lodash'),
-    setSlide = require("./actions/setSlide");
+var _ = require('lodash');
+    //setSlide = require("./actions/setSlide");
    
 
 
@@ -8,14 +8,16 @@ var config = {
       '/:id': {
          get: (ai, params, resolve, reject) => {
 
-            ai.executeActionP(setSlide, {slideIndex: _.parseInt(params.id), direction: params.dir})
+            ai.dispatch("RECEIVE_INDEX", {slideIndex: _.parseInt(params.id)});
+            resolve();
 
+            /*
+            ai.executeActionP(setSlide, {slideIndex: _.parseInt(params.id)})
             .then(resolve)
-
             .catch(err => {
-               console.error(err);
-               reject();
+               console.error(err); reject();
             });
+            */
          }
       }
    }

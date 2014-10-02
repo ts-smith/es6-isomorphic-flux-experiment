@@ -13,28 +13,24 @@ var handlers = {
 class PresentationStore extends BaseStore {
    constructor(dispatcher) {
       this.dispatcher = dispatcher;
-      this.slideIndex = 0;
-      this.direction = null;
+      this.slideIndex = -1;
    }
    setSlide ({slideIndex, direction}) {
       this.slideIndex = slideIndex;
-      this.direction = direction; 
       this.emitChange();
    }
    navigate() {}
 
    getSlide(){
       return {
-         slideIndex: this.slideIndex,
-         direction: this.direction
+         slideIndex: this.slideIndex
       }
    }
    dehydrate(){
       return this.getSlide();
    }
-   rehydrate({slideIndex, direction}){
+   rehydrate({slideIndex}){
       this.slideIndex = slideIndex;
-      this.direction = direction; 
    }
 
 }

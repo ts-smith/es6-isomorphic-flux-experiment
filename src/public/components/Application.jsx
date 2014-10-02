@@ -22,7 +22,7 @@ var Application = React.createClass({
       return this.getStateFromStores();
    },
    getStateFromStores(){
-      //slideIndex, direction
+      //slideIndex
       return this.PresentationStore.getSlide();
    },
    onChange(){
@@ -38,7 +38,19 @@ var Application = React.createClass({
       this.NavStore.removeChangeListener(this.onChange);
    },
 
+   componentWillUpdate(nextProps, nextState){
+      this.previousIndex = this.state.slideIndex;
+   },
+
    render () {
+
+      var forward = this.state.slideIndex > this.previousIndex;
+
+      var cx = React.addons.classSet;
+      var classes = cx({
+         "forward": forward,
+         "backward" : !forward
+      });
 
       return (
          <div className="container">
@@ -48,7 +60,7 @@ var Application = React.createClass({
                {when (slides[this.state.slideIndex + 1], 
                   <DiffLink href={"/slide/" + (this.state.slideIndex + 1)}>Forward</DiffLink> )}
             </div>
-            <ReactCSSTransitionGroup transitionName="slides">
+            <ReactCSSTransitionGroup className={classes} transitionName="slides">
                <div className="slide" key={this.state.slideIndex}>
                   {slides[this.state.slideIndex]}
                </div>
