@@ -22,11 +22,11 @@ function last(func){
 }
 
 
-function navigateTo(href){
+function navigateTo(href, optimize = true){
 
    var transitionContext = app.context.clone();
 
-   var currentRoute = app.currentRoute;
+   var currentRoute = optimize === true? app.currentRoute : optimize;
 
    app.router.runRoute(transitionContext, href, {currentRoute})
 

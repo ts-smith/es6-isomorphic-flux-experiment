@@ -53,7 +53,7 @@ var ListComponent = React.createClass({
       switch (viewKey){
          case "something-else": view = (
             <div className="something-else" key={viewKey}>
-               <p> this is another view determined by an arbitrary routing prop-erty </p>
+               <p> this is another view determined by an arbitrary routing property </p>
             </div>
          ); break;
          case "async": view = (

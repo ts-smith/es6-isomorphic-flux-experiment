@@ -6,7 +6,7 @@ var React = require('react'),
 var DiffLink = React.createClass({
    getDefaultProps () {
       return {
-         noOptimize: false
+         optimize: true
       };
    },
    runActions(event){
@@ -14,7 +14,7 @@ var DiffLink = React.createClass({
       if (window.history && window.history.pushState){
          event.stopPropagation();
 
-         Navigator.navigateTo(this.props.href);
+         Navigator.navigateTo(this.props.href, this.props.optimize);
 
          return false;
       }

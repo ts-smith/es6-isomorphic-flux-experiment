@@ -30,8 +30,6 @@ React.renderComponent(
 );
 
 
-
-
 Navigator.onNavigate( (dehydratedContext, url, reactive) => {
 
    if (!reactive){
@@ -46,3 +44,4 @@ Navigator.onNavigate( (dehydratedContext, url, reactive) => {
 });
 
 window.onpopstate = Navigator.receiveNavigation;
+
