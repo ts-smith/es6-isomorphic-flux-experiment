@@ -3,7 +3,6 @@
  */
 
 var React = require('react/addons'),
-    PresentationStore = require('../stores/PresentationStore'),
     NavStore = require('../stores/NavStore'),
     DiffLink = require('./DiffLink'),
     slides = require('./slides.js');
@@ -17,24 +16,20 @@ function when(predicate, component){
 var Application = React.createClass({
    getInitialState(){
       var context = this.props.context;
-      this.PresentationStore = context.getStore(PresentationStore); //I think getStore is from dispatcher automatically
       this.NavStore = context.getStore(NavStore);
       return this.getStateFromStores();
    },
    getStateFromStores(){
-      //slideIndex
-      return this.PresentationStore.getSlide();
+      return this.NavStore.getRoutingValues("slideIndex");
    },
    onChange(){
       this.setState(this.getStateFromStores());
    },
    componentDidMount(){
       //could listen with finer granularity than here
-      this.PresentationStore.addChangeListener(this.onChange);
       this.NavStore.addChangeListener(this.onChange);
    },
    componentWillUnmount(){
-      this.PresentationStore.removeChangeListener(this.onChange);
       this.NavStore.removeChangeListener(this.onChange);
    },
 
@@ -44,13 +39,8 @@ var Application = React.createClass({
 
    render () {
 
-      var forward = this.state.slideIndex > this.previousIndex;
-
-      var cx = React.addons.classSet;
-      var classes = cx({
-         "forward": forward,
-         "backward" : !forward
-      });
+      var direction = this.state.slideIndex > this.previousIndex? "forward" : "backward";
+      var SlideClass = slides[this.state.slideIndex];
 
       return (
          <div className="container">
@@ -60,9 +50,9 @@ var Application = React.createClass({
                {when (slides[this.state.slideIndex + 1], 
                   <DiffLink href={"/slide/" + (this.state.slideIndex + 1)}>Forward</DiffLink> )}
             </div>
-            <ReactCSSTransitionGroup className={classes} transitionName="slides">
+            <ReactCSSTransitionGroup className={direction} transitionName="slides">
                <div className="slide" key={this.state.slideIndex}>
-                  {slides[this.state.slideIndex]}
+                  <SlideClass context={this.props.context}/>
                </div>
             </ReactCSSTransitionGroup>
          </div>

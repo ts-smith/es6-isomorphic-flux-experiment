@@ -58,6 +58,17 @@ class Router{
          method: "get"
       });
 
+      var relative = url[0] != "/" && currentRoute;
+
+      if (relative){
+         var relativeTo = currentRoute.slice(0,
+               currentRoute.lastIndexOf("/") + 1
+            );
+
+         url = relativeTo + url;
+      }
+
+
       var actionPath = this.getRoutePath(url);
 
       if (currentRoute){
@@ -75,8 +86,10 @@ class Router{
       )
    }
    routePieces(route){
-      var internalRoute;
+      var internalRoute = route;
+
       if (route[route.length - 1] === "/"){
+         //end slashes can be handled by "trunk"
          internalRoute = route.slice(0,-1);
       }
       else internalRoute = route;
@@ -127,7 +140,10 @@ class Router{
          var currentRoutePart = currentRoute[i];
          var nextRoutePart = nextRoute[i];
 
-         if (!currentRoutePart || currentRoutePart.route != nextRoutePart.route || !_.isEqual(currentRoutePart.params, nextRoutePart.params)){
+         if (!currentRoutePart 
+            || currentRoutePart.route != nextRoutePart.route 
+            || !_.isEqual(currentRoutePart.params, nextRoutePart.params)
+            || !currentRoutePart.terminal && nextRoutePart.terminal){
             return nextRoute.slice(i);
          }
       }

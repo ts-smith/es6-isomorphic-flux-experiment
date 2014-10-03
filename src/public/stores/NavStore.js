@@ -5,7 +5,6 @@ var _ = require("lodash");
 var BaseStore = require('dispatchr/utils/BaseStore');
 
 var handlers = {
-   'RECEIVE_NAV_DETAILS': 'receiveNavDetails',
    'RECEIVE_ROUTING_VALUES': 'receiveRoutingValues',
    'NAVIGATION': 'receiveRoutingValues'
 };
@@ -14,14 +13,11 @@ var handlers = {
 class NavStore extends BaseStore {
    constructor(dispatcher) {
       this.dispatcher = dispatcher;
-      this.username = "";
-      this.specialTabs = [];
-      this.routingValues = {};
-   }
-   receiveNavDetails ({username,specialTabs}) {
-      this.username = username;
-      this.specialTabs = specialTabs; 
-      this.emitChange();
+      this.routingValues = {
+         slideIndex: -1,
+         selection: -1,
+         mountPoint: ""
+      };
    }
    receiveRoutingValues (keyValues) {
       _.assign(this.routingValues, keyValues);
@@ -29,26 +25,21 @@ class NavStore extends BaseStore {
       this.emitChange();
    }
 
-   getUsername(){
-      return this.username;
-   }
-   getSpecialTabs(){
-      return this.specialTabs;
-   }
    getRoutingValues(){
+      if (arguments.length > 0){
+         return _.pick(this.routingValues, arguments);
+      }
+
       return this.routingValues;
-   };
+   }
    dehydrate(){
       return {
-         username: this.username,
-         specialTabs: this.specialTabs,
          routingValues: this.routingValues
       }
    }
-   rehydrate({username, specialTabs, routingValues}){
-      this.username = username;
-      this.specialTabs = specialTabs;
-      this.routingValues = _.clone(routingValues);
+   rehydrate({routingValues}){
+      //could do object.define property around here
+      this.routingValues = _.cloneDeep(routingValues);
    }
 
 }

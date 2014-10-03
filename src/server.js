@@ -47,7 +47,7 @@ app.use((req, res, next) => {
    })
    .catch(err => {
       console.error(err);
-      res.send(500);
+      res.send("error", 500);
    });
 });
 

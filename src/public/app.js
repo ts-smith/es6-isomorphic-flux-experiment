@@ -1,9 +1,7 @@
 var Context = require('./Context'),
-    PresentationStore = require('./stores/PresentationStore'),
     NavStore = require('./stores/NavStore'),
     Application = require('./components/Application.js');
 
-Context.registerStore(PresentationStore);
 Context.registerStore(NavStore);
 
 function App({fetcher, initialState, router}) {

@@ -6,9 +6,12 @@ var _ = require('lodash');
 var config = {
    '/slide': {
       '/:id': {
-         get: (ai, params, resolve, reject) => {
+         always: (ai, params, resolve, reject) => {
 
-            ai.dispatch("RECEIVE_INDEX", {slideIndex: _.parseInt(params.id)});
+            ai.dispatch("RECEIVE_ROUTING_VALUES", {
+               slideIndex: _.parseInt(params.id),
+               mountPoint: "/slide/" + _.parseInt(params.id)
+            });
             resolve();
 
             /*
@@ -18,6 +21,18 @@ var config = {
                console.error(err); reject();
             });
             */
+         },
+         get: (ai, params, resolve, reject) => {
+            ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: -1});
+            resolve();
+         },
+         '/selection': {
+            '/:id': {
+               get: (ai, params, resolve, reject) => {
+                  ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: _.parseInt(params.id)});
+                  resolve();
+               }
+            }
          }
       }
    }
