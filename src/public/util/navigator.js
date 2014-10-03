@@ -9,16 +9,23 @@ function setApplication(application){
 }
 
 var serial = 0;
-function last(func){
+function last(success, fail){
    var id = serial++;
 
-   return function(){
-      if (id + 1 == serial){
+   return [ 
+      function(){
+         if (id + 1 == serial){
 
-         func.apply(func, arguments);
+            success.apply(success, arguments);
 
+         }
+      }, 
+      function(){
+         if (id + 1 == serial){
+            fail.apply(fail, arguments);
+         }
       }
-   }
+   ];
 }
 
 
@@ -28,14 +35,25 @@ function navigateTo(href, optimize = true){
 
    var currentRoute = optimize === true? app.currentRoute : optimize;
 
-   app.router.runRoute(transitionContext, href, {currentRoute})
+   var routing = app.router.runRoute(transitionContext, href, {currentRoute});
 
-   .then( last( _.partialRight(emitNavigation, href) ) )
+   routing.then.apply(routing, 
+      last( 
+         _.partialRight(emitNavigation, href),
 
-   .catch (err => {
-      transitionContext = null;
-      console.error(err);
-   });
+         (reason) => {
+            transitionContext = null;
+
+            if (reason.redirect) {
+               navigateTo(reason.redirect);
+            }
+            else {
+               console.error(err);
+            }
+         }
+      ) 
+   )
+
 
 }
 function receiveNavigation(){
@@ -44,17 +62,24 @@ function receiveNavigation(){
    var previousRoute = app.currentRoute;
    var receivedRoute = location.pathname + location.search;
 
-   app.router.runRoute(transitionContext, receivedRoute, {currentRoute: previousRoute})
+   var routing = app.router.runRoute(transitionContext, receivedRoute, {currentRoute: previousRoute});
 
-   .then( last( _.partialRight(emitNavigation, null, true) ) )
+   routing.then.apply(routing,
+      last( 
+         _.partialRight(emitNavigation, null, true),
 
-   .catch (err => {
-      transitionContext = null;
-      console.error(err);
-   });
+         (reason) => {
+            transitionContext = null;
 
-
-
+            if (reason.redirect) {
+               navigateTo(reason.redirect);
+            }
+            else {
+               console.error(err);
+            }
+         }
+      ) 
+   )
 }
 
 

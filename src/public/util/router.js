@@ -165,7 +165,6 @@ class Router{
    runPathActions(context, pathActions, method){
       console.log("actions: " + JSON.stringify(
          pathActions.map(action => {return action.route.route}), 
-
       null, 2));
 
       var index = 1;
@@ -174,6 +173,7 @@ class Router{
 
 
       return new Promise((resolve,reject) => {
+         var rejected = false;
 
          if (pathActions[0]) {
             runPathAction( pathActions[0], makeNext(pathActions[index]) )
@@ -186,16 +186,17 @@ class Router{
          function makeNext(pathAction){
 
             if (pathAction) return function(){
-               ++index;
-               runPathAction( pathAction, makeNext(pathActions[index]));
+               //this may not work
+               if (!rejected){
+                  ++index;
+                  runPathAction( pathAction, makeNext(pathActions[index]));
+               }
             }
             else return false;
          }
 
 
          function runPathAction(action, next){
-
-            //console.log("running action " + action.route.route);
 
             if (next){
 
@@ -207,37 +208,33 @@ class Router{
                         ,self.executePathActionP(context, action, "trunk")]
                      )
                      .then(next)
-                     //.catch {stop prop, possibly redirect}
-                     .catch(err => {
-                        console.error(err);
-                     })
+                     .catch(reject);
                }
                else {
-                  actionPromises.push( self.executePathActionP(context, action) );
-                  actionPromises.push( self.executePathActionP(context, action, "trunk") );
+                  actionPromises.push( 
+                     self.executePathActionP(context, action),
+                     self.executePathActionP(context, action, "trunk") 
+                  );
                   next();
                }
             }
             else {
-               //console.log('end of line');
                //async irrelevant
-               actionPromises.push(self.executePathActionP(context, action));
-               actionPromises.push(self.executePathActionP(context, action, method));
-               actionPromises.push(self.executePathActionP(context, action, "leaf"));
+               actionPromises.push(
+                  self.executePathActionP(context, action),
+                  self.executePathActionP(context, action, method),
+                  self.executePathActionP(context, action, "leaf")
+               );
 
-               //console.log("methods executed");
 
                Promise.all( actionPromises )
                .then(() => {
-                  //console.log("complete")
-                  //render or something
                   resolve(context);
                })
                .catch(err => {
-                  console.error("error: ", err);
-                  reject("wat");
-               })
-               //.catch {stop prop, possibly redirect}
+                  rejected = true;
+                  reject(err);
+               });
             }
          }
       });
@@ -245,46 +242,3 @@ class Router{
 }
 
 module.exports = Router;
-
-//var url =      "/something-one/subroute/sub";
-//var urlTwo =   "/something-one/anotherRoute/sub";
-//var urlErr =   "/something-one/anotherRoute/sub/er1/er2";
-//var withRoot = "/something-one/";
-
-//var router = new Router(config);
-//router.registerContext({});
-
-//var routeDiffs = router.diffUrls(withRoot, urlTwo);
-
-//console.log(routeDiffs);
-
-/*
-console.log("route: " + url)
-router.runRoute(url)
-
-.then(() => {
-   console.log("\n\n");
-   console.log("route: " + urlTwo)
-   return router.runRoute(urlTwo)
-})
-
-.then(() => {
-   console.log("\n\n"); 
-   console.log("route: " + withRoot)
-   return router.runRoute(withRoot);
-})
-
-.then(() => {
-   console.log("\n\n");
-   console.log("with un matched route");
-   console.log("route: " + urlErr)
-   return router.runRoute(urlErr, "post");
-})
-
-.then(() => {
-   console.log("\n\n");
-   console.log("nested async skip");
-   console.log("route: " + urlTwo);
-   return router.runRoute(urlTwo);
-})
-*/

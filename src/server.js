@@ -45,9 +45,14 @@ app.use((req, res, next) => {
       });
 
    })
-   .catch(err => {
-      console.error(err);
-      res.send("error", 500);
+   .catch(reason => {
+
+      if (reason.redirect){
+         res.redirect(reason.redirect);
+      }
+
+      console.error(reason);
+      res.status(500).send("error");
    });
 });
 

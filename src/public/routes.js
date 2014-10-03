@@ -4,33 +4,40 @@ var _ = require('lodash');
 
 
 var config = {
-   '/slide': {
-      '/:id': {
-         always: (ai, params, resolve, reject) => {
+   '/': {
+      async: true,
+      get: (ai, params, resolve, reject) => {
+         reject({redirect: "/slide/0"});
+      },
+      '/slide': {
+         '/:id': {
+            always: (ai, params, resolve, reject) => {
 
-            ai.dispatch("RECEIVE_ROUTING_VALUES", {
-               slideIndex: _.parseInt(params.id),
-               mountPoint: "/slide/" + _.parseInt(params.id)
-            });
-            resolve();
+               ai.dispatch("RECEIVE_ROUTING_VALUES", {
+                  slideIndex: _.parseInt(params.id),
+                  mountPoint: "/slide/" + _.parseInt(params.id)
+               });
+               resolve();
 
-            /*
-            ai.executeActionP(setSlide, {slideIndex: _.parseInt(params.id)})
-            .then(resolve)
-            .catch(err => {
-               console.error(err); reject();
-            });
-            */
-         },
-         get: (ai, params, resolve, reject) => {
-            ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: -1});
-            resolve();
-         },
-         '/selection': {
-            '/:id': {
-               get: (ai, params, resolve, reject) => {
-                  ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: _.parseInt(params.id)});
-                  resolve();
+               /*
+               ai.executeActionP(setSlide, {slideIndex: _.parseInt(params.id)})
+               .then(resolve)
+               .catch(err => {
+                  console.error(err); reject();
+               });
+               */
+            },
+            get: (ai, params, resolve, reject) => {
+               ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: -1});
+               resolve();
+            },
+            '/selection': {
+               '/:id': {
+                  get: (ai, params, resolve, reject) => {
+                     reject({redirect: "/slide/0"});
+                     //ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: _.parseInt(params.id)});
+                     //resolve();
+                  }
                }
             }
          }
