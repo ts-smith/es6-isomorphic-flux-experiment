@@ -36,6 +36,9 @@ var Application = React.createClass({
    componentWillUpdate(nextProps, nextState){
       this.previousIndex = this.state.slideIndex;
    },
+   shouldComponentUpdate(np, nextState){
+      return this.state.slideIndex !== nextState.slideIndex;
+   },
 
    render () {
 
@@ -44,13 +47,17 @@ var Application = React.createClass({
 
       return (
          <div className="container">
-            <div>
+            <div className="nav-buttons">
                {when (slides[this.state.slideIndex - 1], 
-                  <DiffLink href={"/slide/" + (this.state.slideIndex - 1)}>Back</DiffLink> )}
+                  <DiffLink className="left" href={"/slide/" + (this.state.slideIndex - 1)}>
+                     <img src="/arrow-left.png" />
+                  </DiffLink> )}
                {when (slides[this.state.slideIndex + 1], 
-                  <DiffLink href={"/slide/" + (this.state.slideIndex + 1)}>Forward</DiffLink> )}
+                  <DiffLink className="right" href={"/slide/" + (this.state.slideIndex + 1)}>
+                     <img src="/arrow-right.png" />
+                  </DiffLink> )}
             </div>
-            <ReactCSSTransitionGroup className={direction} transitionName="slides">
+            <ReactCSSTransitionGroup className={direction} transitionName={"slides-" + direction}>
                <div className="slide" key={this.state.slideIndex}>
                   <SlideClass context={this.props.context}/>
                </div>

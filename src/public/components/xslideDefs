@@ -1,0 +1,66 @@
+
+/*
+var DeepSlide = React.createClass({
+   getInitialState(){
+      var context = this.props.context;
+      this.NavStore = context.getStore(NavStore); 
+
+      return this.getStateFromStores();
+   },
+   
+   getStateFromStores(){
+      return this.NavStore.getRoutingValues(
+         "slideIndex", 
+         "selection", 
+         "mountPoint");
+   }, 
+   onChange(){
+      this.setState(this.getStateFromStores());
+   },
+   componentDidMount(){
+      this.NavStore.addChangeListener(this.onChange);
+   },
+   componentWillUnmount(){
+      this.NavStore.removeChangeListener(this.onChange);
+   },
+
+   shouldComponentUpdate(nextProps, nextState){
+      return this.state.slideIndex === nextState.slideIndex;
+   },
+   render(){
+
+      var selectedInfo = null;
+
+      if (this.state.selection == 1){
+         selectedInfo = (
+            <div key={1}> Look at this mad selection yo </div>
+         )
+      }
+      else if (this.state.selection == 2){
+         selectedInfo = (
+            <div key={2}> this isn't as cool </div>
+         )
+      }
+
+      var cx = React.addons.classSet;
+      var classes = cx({
+         'selection': true,
+      });
+
+      return <div>
+         <ul>
+            <li><DiffLink href={this.state.mountPoint}>Unselect</DiffLink></li>
+            <li><DiffLink href={this.state.mountPoint + "/selection/" + 1}>Select 1</DiffLink></li>
+            <li><DiffLink href={this.state.mountPoint + "/selection/" + 2}>Select 2</DiffLink></li>
+         </ul>
+         <ReactCSSTransitionGroup className={classes} transitionName="selection" component={React.DOM.div}>
+            {selectedInfo}
+         </ReactCSSTransitionGroup>
+
+      </div>
+   }
+
+});
+
+
+*/

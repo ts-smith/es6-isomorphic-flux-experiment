@@ -1,4 +1,5 @@
 require('traceur');
+var _ = require('lodash')
 
 var http = require('http'),
     express = require('express'),
@@ -34,7 +35,15 @@ app.use((req, res, next) => {
 
    .then(() => {
 
-      var html = React.renderComponentToString(application.getComponent());
+      try {
+         var html = React.renderComponentToString(application.getComponent());
+      }
+      catch (err){
+         _.defer(() =>{ 
+            console.log("renderComponentToString failed"); 
+            throw err; 
+         });
+      }
 
       res.expose(application.context.dehydrate(), 'Context');
 

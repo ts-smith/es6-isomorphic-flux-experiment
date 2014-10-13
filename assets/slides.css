@@ -1,0 +1,64 @@
+.nav-list {
+   list-style: none;
+   float: left;
+   padding-left: 2px;
+   width: 100%;
+   text-align: center;
+}
+.nav-list li {
+   display: inline-block;
+   padding: 0 4px;
+}
+.nav-list li a {
+   text-decoration: underline;
+   color: black;
+}
+.selection {
+   clear: both;
+}
+.selection > * {
+   position: relative;
+}
+
+.centered {
+   text-align: center;
+}
+
+.slide ul li {
+   margin-bottom: 12px;
+}
+.list {
+   font-size: 1.2em;
+   text-align: left;
+}
+
+.list * {
+   position: relative;
+}
+
+.list .selection-enter {
+   transition: left .45s ease-in;
+   left: 1200px;
+}
+.list .selection-enter.selection-enter-active {
+   left: 0px;
+}
+.list .selection-leave {
+   transition: left .45s ease-in;
+   left: 0px;
+}
+.list .selection-leave.selection-leave-active {
+   left: 1200px;
+}
+
+.block-link {
+   display: block;
+   height: 100%;
+   text-decoration: inherit;
+   underline: inherit;
+   cursor: default;
+   color: inherit;
+}
+
+
+

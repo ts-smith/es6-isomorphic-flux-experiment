@@ -9,7 +9,6 @@ var handlers = {
    'NAVIGATION': 'receiveRoutingValues'
 };
 
-//util.inherits(MessageStore, BaseStore);
 class NavStore extends BaseStore {
    constructor(dispatcher) {
       this.dispatcher = dispatcher;

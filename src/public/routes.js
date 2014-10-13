@@ -1,5 +1,4 @@
 var _ = require('lodash');
-    //setSlide = require("./actions/setSlide");
    
 
 
@@ -19,24 +18,16 @@ var config = {
                });
                resolve();
 
-               /*
-               ai.executeActionP(setSlide, {slideIndex: _.parseInt(params.id)})
-               .then(resolve)
-               .catch(err => {
-                  console.error(err); reject();
-               });
-               */
             },
             get: (ai, params, resolve, reject) => {
-               ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: -1});
+               ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: null});
                resolve();
             },
             '/selection': {
-               '/:id': {
+               '/:selection': {
                   get: (ai, params, resolve, reject) => {
-                     reject({redirect: "/slide/0"});
-                     //ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: _.parseInt(params.id)});
-                     //resolve();
+                     ai.dispatch("RECEIVE_ROUTING_VALUES", {selection: params.selection});
+                     resolve();
                   }
                }
             }
